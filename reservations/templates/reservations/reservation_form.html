@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Réserver un trajet{% endblock %}
+
+{% block content %}
+  <h2>Réserver un trajet</h2>
+
+  {% if user.is_authenticated %}
+    <form method="post">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div>
+        <label for="trajet">Trajet :</label>
+        <input type="text" id="trajet" value="{{ trajet.departure_city }} → {{ trajet.arrival_city }}" disabled>
+      </div>
+
+      <div>
+        <label for="date">Date :</label>
+        <input type="text" id="date" value="{{ trajet.travel_date }}" disabled>
+      </div>
+
+      <div>
+        <label for="bus">Bus :</label>
+        <input type="text" id="bus" value="{{ trajet.bus.name }}" disabled>
+      </div>
+
+      <div>
+        <label for="seats">Nombre de places à réserver :</label>
+        {{ form.seats }}
+        {% if form.seats.errors %}
+          <div class="error">{{ form.seats.errors }}</div>
+        {% endif %}
+      </div>
+
+      <button type="submit">Confirmer la réservation</button>
+    </form>
+  {% else %}
+    <p>Vous devez être connecté pour réserver un trajet.</p>
+    <a href="{% url 'login' %}?next={{ request.path }}">Se connecter</a>
+  {% endif %}
+{% endblock %}

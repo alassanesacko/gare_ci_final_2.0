@@ -1,0 +1,170 @@
+/* Styles spécifiques à reservation_list.html */
+
+    /* Container */
+    .reservations-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+    /* Header */
+    .reservations-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .reservations-header h2 {
+        color: #333;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 5px;
+    }
+
+    .reservations-header h2 i {
+        color: #FF6B00;
+    }
+
+    /* Table */
+    .reservations-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .reservations-table th {
+        background-color: #f8f9fa;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #555;
+        border-bottom: 2px solid #eee;
+    }
+
+    .reservations-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+        vertical-align: middle;
+    }
+
+    .reservations-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .reservations-table tr:hover td {
+        background-color: rgba(255, 107, 0, 0.03);
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .status-pending {
+        background-color: #fff3cd;
+        color: #d39e00;
+    }
+
+    .status-confirmed {
+        background-color: #e6f7ee;
+        color: #28a745;
+    }
+
+    .status-cancelled {
+        background-color: #f8d7da;
+        color: #dc3545;
+    }
+
+    /* Buttons */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-weight: 500;
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-sm {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+    }
+
+    .btn-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+    .btn-warning:hover {
+        background-color: #e0a800;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background-color: #c82333;
+    }
+
+    .btn-default {
+        background-color: #f8f9fa;
+        color: #333;
+        border: 1px solid #ddd;
+    }
+
+    .btn-default:hover {
+        background-color: #e2e6ea;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 30px;
+        color: #999;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .reservations-table {
+            display: block;
+            overflow-x: auto;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            gap: 5px;
+        }
+    }

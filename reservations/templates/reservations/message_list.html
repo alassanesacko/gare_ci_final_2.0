@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Mes Messages - GareCI{% endblock %}
+
+{% block content %}
+    <div>
+        <div class="conversation-footer">
+                <a href="{% url 'trips:home' %}#contact" class="btn btn-primary new-message-btn">
+                    <i class="fas fa-plus"></i> Nouveau message
+                </a>
+            </div>
+    <div class="messages-container">
+        <div class="messages-header">
+            <h1><i class="fas fa-comments"></i> Mes Conversations</h1>
+            <p class="subtitle">Historique de vos échanges avec notre service client</p>
+        </div>
+
+        {% if messages %}
+            <div class="conversation-list">
+                {% for msg in messages %}
+                    <div class="conversation-header">
+                        <span class="date">{{ msg.submitted_at|date:"d/m/Y H:i" }}</span>
+                        <form method="post" action="{% url 'reservations:delete_message' msg.id %}" class="delete-form">
+                        {% csrf_token %}
+                            <button type="submit" class="btn-icon" onclick="return confirm('Supprimer cette conversation ?');">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="conversation {% if not msg.reply %}unread{% endif %}">           
+                        <div class="message user-message">
+                            <div class="message-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="message-content">
+                                <div class="message-text">{{ msg.message }}</div>
+                                <div class="message-time">{{ msg.submitted_at|date:"H:i" }}</div>
+                            </div>
+                        </div>
+                
+                        {% if msg.reply %}
+                        <div class="message admin-message">
+                            <div class="message-avatar">
+                                <i class="fas fa-headset"></i>
+                            </div>
+                            <div class="message-content">
+                                <div class="message-author">Support GareCI</div>
+                                <div class="message-text">{{ msg.reply }}</div>
+                                <div class="message-time">{{ msg.replied_at|date:"d/m/Y H:i" }}</div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="waiting-response">
+                            <i class="fas fa-clock"></i> En attente de réponse de notre équipe
+                        </div>
+                        {% endif %}
+                    </div>
+                    <hr>
+                {% endfor %}
+            </div>
+        {% else %}
+        <div class="no-results">
+            <div class="empty-content">
+                <i class="fas fa-comments"></i>
+                <h3>Aucune conversation</h3>
+                <p>Vous n'avez pas encore contacté notre service client.</p>
+                <a href="{% url 'trips:home' %}#contact" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Commencer une conversation
+                </a>
+            </div>
+        </div>
+        {% endif %} 
+    </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% block title %}Accueil{% endblock %}
+{% load static %}
+
+{% block content %}
+<!-- Section Hero -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>Voyagez en toute sécurité à travers la Côte d'Ivoire</h1>
+                    <p>Réservez vos billets de bus en ligne facilement et rapidement</p>
+                    <a href="#search" class="btn btn-primary">Voir les trajets disponibles</a>
+                </div>
+            </div>
+        </section>
+
+    <!-- Section Recherche de trajets -->
+    <section id="search" class="search-section">
+        <div class="container">
+            <h2 class="section-title">Rechercher un trajet</h2>
+            
+            <div class="search-card">
+                <form method="get" action="{% url 'trips:search_results' %}">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="origin">Ville de départ</label>
+                            <input type="text" id="origin" name="origin" class="form-control" placeholder="Sélectionnez...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="destination">Ville d'arrivée</label>
+                            <input type="text" id="destination" name="destination" class="form-control" placeholder="Sélectionnez...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="date">Date de voyage</label>
+                            <input type="date" id="date" name="date" class="form-control">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Rechercher</button>
+                </form>
+            </div>
+            
+            <section class="cards-section">
+                    <div class="section-header">
+                        <h3>Prochains départs</h3>
+                    </div>
+                
+                    <div class="cards-grid">
+                        {% for departure in departures|slice:"0:3" %}
+                        <div class="trip-card">
+                            <div class="trip-header">
+                                <h4>{{ departure.trip.origin }} → {{ departure.trip.destination }}</h4>
+                                <span class="trip-category vip">VIP</span>
+                            </div>
+                            <div class="trip-image">
+                                <img src="{% static "imgs/0f7bb52_31208-270c8m.jpg" %}" alt="yamoussoukro Image" class="yamoussoukro">
+                            </div>
+                            <div class="trip-details">
+                                <p><i class="fas fa-calendar-day"></i>Date: {{ departure.time|time:'H:i' }} /{{ departure.date }}</p>
+                                <p><i class="fas fa-bus"></i>Bus: {{ departure.bus }}</p>
+                                <p><i class="fas fa-chair"></i>Prix: {{ departure.trip.price }} FCFA</p>
+                            </div>
+                            <div class="trip-actions">
+                                
+                                <a href="{% url 'reservations:reserve' departure.id %}" class="btn btn-outline">Réserver</a>
+                                <!--<button class="btn btn-primary">Modifier</button>-->
+                            </div>
+                        </div>
+                        {% empty %}
+                                <i class="fas fa-bus"></i>
+                                <p>Aucun départ disponible actuellement</p>
+                        {% endfor %}
+                    </div>
+                </section>
+
+            <!-- Section Départs disponibles -->
+    
+            <div class="results-container" id="departures">
+                <h3 class="results-title">Départs disponibles</h3>
+                <table class="departures-table">
+                    <thead>
+                        <tr>
+                            <th>Ville de départ</th>
+                            <th>Ville d'arrivée</th>
+                            <th>Date</th>
+                            <th>Heure</th>
+                            <th>Bus</th>
+                            <th>Prix</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for departure in departures %}
+                        <tr>
+                            <td>{{ departure.trip.origin }}</td>
+                            <td>{{ departure.trip.destination }}</td>
+                            <td>{{ departure.date }}</td>
+                            <td>{{ departure.time|time:'H:i' }}</td>
+                            <td>{{ departure.bus }}</td>
+                            <td>{{ departure.trip.price }} FCFA</td>
+                            <td>
+                                <a href="{% url 'reservations:reserve' departure.id %}" class="btn btn-primary btn-sm">Réserver</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <i class="fas fa-bus"></i>
+                                <p>Aucun départ disponible actuellement</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Section Réservations -->
+    {% if user.is_authenticated and not user.is_staff %}
+    <section id="reservations" class="reservations-section">
+        <div class="container">
+            <h2 class="section-title">Mes réservations</h2>
+            <div class="reservations-container">
+                {% if reservations %}
+                    <table class="reservations-table">
+                        <thead>
+                            <tr>
+                                <th>Référence</th>
+                                <th>Trajet</th>
+                                <th>Date</th>
+                                <th>Statut</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reservation in reservations %}
+                            <tr>
+                                <td>#{{ reservation.id }}</td>
+                                <td>{{ reservation.departure.trip.origin }} → {{ reservation.departure.trip.destination }}</td>
+                                <td>{{ reservation.departure.date|date:"d/m/Y" }}</td>
+                                <td><span class="status-confirmed">Confirmée</span></td>
+                                <td><a href="#" class="btn btn-outline btn-sm">Détails</a></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-ticket-alt"></i>
+                        <p>Vous n'avez aucune réservation</p>
+                        <a href="#search" class="btn btn-outline">Rechercher des trajets</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Section Contact -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <h2 class="section-title">Contactez-nous</h2>
+            
+            <div class="contact-container">
+                <form class='contact-form ' method="post" action="">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="contact-name">Nom complet</label>
+                        {{ contact_form.name }}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contact-email">Email</label>
+                        {{ contact_form.email }}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contact-message">Message</label>
+                        {{ contact_form.message }}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Envoyer le message</button>
+                </form>
+                
+                <div class="contact-info">
+                    <h3>Informations de contact</h3>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <p>123 Rue de la Gare, Abidjan, Côte d'Ivoire</p>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-phone-alt"></i>
+                        <p>+225 00 00 00 00</p>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-envelope"></i>
+                        <p>contact@gareci.ci</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

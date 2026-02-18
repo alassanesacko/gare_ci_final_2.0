@@ -1,0 +1,251 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GareCI Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/dashboards.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/reservation_list.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/reservation_form.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/reservation_confirm_delete.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/trip_form.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/trip_list.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/message_list.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/message_form.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/message_confirm_delete.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/departure_list_.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/departure_form.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/category_list.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/category_form.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/bus_list.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/bus_form.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <a href="{% url 'dashboard:index' %}">
+                    <i class="fas fa-bus"></i>
+                    <h1>Gare<span>CI</span> Admin</h1>            
+                </a>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="{% if active_tab == 'dashboard' %}active{% endif %}">
+                        <a href="{% url 'dashboard:index' %}">
+                            <i class="fas fa-tachometer-alt"></i> Tableau de bord
+                        </a>
+                    </li>
+
+                    <!-- Section Gestion -->
+                    <li class="nav-section-header">
+                        <span><i class="fas fa-cog"></i> Gestion</span>
+                    </li>
+                    
+                    <li class="{% if active_tab == 'reservations' %}active{% endif %}">
+                        <a href="{% url 'dashboard:reservation_list' %}">
+                            <i class="fas fa-ticket-alt"></i> Réservations
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="{% url 'dashboard:reservation_list' %}?status=P">En attente</a></li>
+                            <li><a href="{% url 'dashboard:reservation_list' %}?status=C">Confirmées</a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="{% if active_tab == 'trips' %}active{% endif %}">
+                        <a href="{% url 'dashboard:trip_list' %}">
+                            <i class="fas fa-route"></i> Trajets
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="{% url 'dashboard:trip_add' %}"><i class="fas fa-plus"></i> Ajouter</a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="{% if active_tab == 'departures' %}active{% endif %}">
+                        <a href="{% url 'dashboard:departure_list' %}">
+                            <i class="fas fa-calendar-alt"></i> Départs
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="{% url 'dashboard:departure_add' %}"><i class="fas fa-plus"></i> Ajouter</a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Section Ressources -->
+                    <li class="nav-section-header">
+                        <span><i class="fas fa-database"></i> Ressources</span>
+                    </li>
+                    
+                    <li class="{% if active_tab == 'buses' %}active{% endif %}">
+                        <a href="{% url 'dashboard:bus_list' %}">
+                            <i class="fas fa-bus"></i> Bus
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="{% url 'dashboard:bus_add' %}"><i class="fas fa-plus"></i> Ajouter</a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="{% if active_tab == 'categories' %}active{% endif %}">
+                        <a href="{% url 'dashboard:category_list' %}">
+                            <i class="fas fa-tags"></i> Catégories
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="{% url 'dashboard:category_add' %}"><i class="fas fa-plus"></i> Ajouter</a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Section Communication -->
+                    <li class="nav-section-header">
+                        <span><i class="fas fa-comments"></i> Communication</span>
+                    </li>
+                    
+                    <li class="{% if active_tab == 'messages' %}active{% endif %}">
+                        <a href="{% url 'dashboard:message_list' %}">
+                            <i class="fas fa-envelope"></i> Messages
+                            {% if unread_messages %}
+                            <span class="badge">{{ unread_messages }}</span>
+                            {% endif %}
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="{% url 'dashboard:message_list' %}?status=unread">Non lus</a></li>
+                            <li><a href="{% url 'dashboard:message_list' %}?status=replied">Répondu</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Section home -->
+                    <li class="nav-section-header">
+                        <span><i class="fas fa-home"></i> Accueil</span>
+                    </li>
+                    <li class="{% if active_tab == 'messages' %}active{% endif %}">
+                        <a href="{% url 'trips:home' %}">
+                            <i class="fas fa-home"></i>Accueil Client
+                        </a>
+                    </li>
+
+
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        {% if user.profile.image %}
+                            <img src="{{ user.profile.image.url }}" alt="{{ user.username }}">
+                        {% else %}
+                            <div class="avatar-initials">
+                                {{ user.username|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name">
+                            <strong>{{ user.get_full_name|default:user.username }}</strong>
+                            {% if user.is_superuser %}
+                                <span class="user-staff">Administrateur</span>
+                            {% else %}
+                                <span class="user-staff">Staff</span>
+                            {% endif %}
+                        </div>
+                        <div class="user-actions">
+                            <a href="{% url 'admin:index' %}" class="admin-link">
+                                <i class="fas fa-cog"></i> Admin
+                            </a>
+                            <form method="post" action="{% url 'accounts:logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header with Quick Actions -->
+            <header class="content-header">
+                <div class="header-left">
+                    <button class="sidebar-toggle"><i class="fas fa-bars"></i></button>
+                    <div class="breadcrumbs">
+                        {% block breadcrumbs %}
+                        <a href="{% url 'dashboard:index' %}">Tableau de bord</a>
+                        {% if breadcrumb_title %} &rsaquo; {{ breadcrumb_title }}{% endif %}
+                        {% endblock %}
+                    </div>
+                </div>
+                <div class="header-right">
+                    {% block header_actions %}
+                    <div class="quick-actions">
+                        {% if active_tab == 'reservations' %}
+                    <!--    <a href="{% url 'dashboard:reservation_confirm' 0 %}" class="btn btn-primary">
+                            <i class="fas fa-check-circle"></i> Confirmer
+                        </a>-->
+                        {% endif %}
+                        {% if 'add' in request.path %}
+                        <button type="submit" form="create-form" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Enregistrer
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="notifications">
+                        <i class="fas fa-bell"></i>
+                        {% if unread_notifications %}
+                        <span class="badge">{{ unread_notifications }}</span>
+                        {% endif %}
+                    </div>
+                    {% endblock %}
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="content-wrapper">
+                {% block content %}
+                <!-- Main content block to be overridden by child templates -->
+                {% endblock %}
+            </div>
+        </main>
+
+        <!-- Modal Container -->
+        <div id="modal-container" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <div class="modal-body">
+                    <!-- Modal content will be loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+ 
+
+    <script>
+        // Gestion des sous-menus
+        $(document).ready(function() {
+            $('.nav-list > li > a').click(function(e) {
+                if ($(this).siblings('.submenu').length) {
+                    e.preventDefault();
+                    $(this).parent().toggleClass('submenu-open');
+                }
+            });
+
+            // Toggle sidebar on mobile
+            $('.sidebar-toggle').click(function() {
+                $('.sidebar').toggleClass('active');
+                $('.main-content').toggleClass('sidebar-collapsed');
+            });
+
+            // Close messages
+            $('.close-message').click(function() {
+                $(this).parent().fadeOut();
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

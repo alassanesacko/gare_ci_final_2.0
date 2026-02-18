@@ -1,0 +1,138 @@
+/* Styles spécifiques à message_confirm_delete.html */
+
+    /* Style cohérent avec le thème */
+    .delete-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 30px;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .delete-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 25px;
+        color: #dc3545;
+    }
+    
+    .delete-header i {
+        font-size: 1.8rem;
+    }
+    
+    .delete-header h2 {
+        font-size: 1.5rem;
+        margin: 0;
+    }
+    
+    .confirmation-message {
+        background-color: #fff8f8;
+        border-left: 4px solid #dc3545;
+        padding: 15px;
+        margin-bottom: 25px;
+        border-radius: 0 4px 4px 0;
+    }
+    
+    .message-details {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 25px;
+    }
+    
+    .message-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .meta-label {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .meta-value {
+        color: #212529;
+    }
+    
+    .message-content {
+        background: white;
+        padding: 15px;
+        border-radius: 4px;
+        border: 1px solid #eee;
+        font-style: italic;
+        line-height: 1.5;
+    }
+    
+    /* Boutons */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 16px;
+        border-radius: 4px;
+        font-weight: 500;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+        gap: 8px;
+    }
+    
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background-color: #c82333;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .delete-container {
+            padding: 20px;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+        
+        .message-meta {
+            flex-direction: column;
+            gap: 10px;
+        }
+    }
+

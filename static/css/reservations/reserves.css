@@ -1,0 +1,71 @@
+/* ===== RESERVATION CONFIRMATION STYLES ===== */
+.reservation-details {
+    margin: 25px 0;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.reservation-details h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-item i {
+    width: 25px;
+    color: #FF6B00;
+    font-size: 1.1rem;
+    margin-right: 10px;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #555;
+    min-width: 80px;
+    margin-right: 10px;
+}
+
+.detail-value {
+    color: #333;
+    flex-grow: 1;
+}
+
+.detail-item.price .detail-value {
+    font-weight: 700;
+    color: #28a745;
+    font-size: 1.1rem;
+}
+
+.auth-form .btn-outline {
+    margin-top: 15px;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .detail-label {
+        margin-bottom: 5px;
+    }
+    
+    .detail-item i {
+        margin-bottom: 5px;
+    }
+}

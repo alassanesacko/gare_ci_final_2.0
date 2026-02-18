@@ -1,0 +1,51 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Liste des bus{% endblock %}
+{% block content %}
+
+
+<div class="buses-container">
+    <div class="buses-header">
+        <h2><i class="fas fa-bus-alt"></i> Liste des bus</h2>
+        <a href="{% url 'dashboard:bus_add' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Ajouter un bus
+        </a>
+    </div>
+
+    <table class="buses-table">
+        <thead>
+            <tr>
+                <th>Nom du bus</th>
+                <th>Capacité</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bus in object_list %}
+            <tr>
+                <td>{{ bus.name }}</td>
+                <td class="capacity">{{ bus.capacity }} places</td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="{% url 'dashboard:bus_edit' bus.pk %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                        <a href="{% url 'dashboard:bus_delete' bus.pk %}" 
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Voulez-vous vraiment supprimer ce bus ?');">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="empty-state">
+                    <i class="fas fa-bus-alt"></i>
+                    <p>Aucun bus enregistré</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

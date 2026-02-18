@@ -1,0 +1,76 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Modifier une réservation{% endblock %}
+{% block content %}
+
+<div class="reservation-form-container">
+    <div class="reservation-form-header">
+        <i class="fas fa-calendar-check"></i>
+        <h2>Modifier la réservation #{{ object.id }}</h2>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            {% for field in form %}
+                <div class="form-group">
+                    {{ field.label_tag }}
+                    
+                    {% if field.name == 'departure_date' or field.name == 'departure_time' %}
+                        <div class="datetime-input">
+                            {{ field }}
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    
+                    {% if field.help_text %}
+                        <span class="helptext">{{ field.help_text }}</span>
+                    {% endif %}
+                    {% if field.errors %}
+                        <div class="errorlist">{{ field.errors }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Enregistrer les modifications
+            </button>
+            <a href="{% url 'dashboard:reservation_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Annuler
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Amélioration de l'expérience utilisateur pour les champs de date
+        const dateInputs = document.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(input => {
+            // Définir la date minimale sur aujourd'hui
+            const today = new Date().toISOString().split('T')[0];
+            input.min = today;
+            
+            // Si la valeur est vide, définir la date d'aujourd'hui par défaut
+            if (!input.value) {
+                input.value = today;
+            }
+        });
+        
+        // Gestion des champs de temps
+        const timeInputs = document.querySelectorAll('input[type="time"]');
+        timeInputs.forEach(input => {
+            // Si la valeur est vide, définir l'heure actuelle par défaut
+            if (!input.value) {
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                input.value = `${hours}:${minutes}`;
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Répondre au message{% endblock %}
+{% block content %}
+
+
+<div class="reply-container">
+    <div class="reply-header">
+        <i class="fas fa-reply"></i>
+        <h2>Répondre à {{ object.name }}</h2>
+    </div>
+    
+    <div class="message-details">
+        <div class="detail-item">
+            <span class="detail-label"><i class="fas fa-envelope"></i> Email :</span>
+            <span class="detail-value">{{ object.email }}</span>
+        </div>
+        {% if object.phone %}
+        <div class="detail-item">
+            <span class="detail-label"><i class="fas fa-phone"></i> Téléphone :</span>
+            <span class="detail-value">{{ object.phone }}</span>
+        </div>
+        {% endif %}
+        <div class="detail-item">
+            <span class="detail-label"><i class="fas fa-calendar-alt"></i> Date :</span>
+            <span class="detail-value">{{ object.submitted_at|date:"d/m/Y H:i" }}</span>
+        </div>
+        {% if object.subject %}
+        <div class="detail-item">
+            <span class="detail-label"><i class="fas fa-tag"></i> Sujet :</span>
+            <span class="detail-value">{{ object.subject }}</span>
+        </div>
+        {% endif %}
+        <div class="message-content">
+            {{ object.message|linebreaks }}
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_reply"><i class="fas fa-edit"></i> Votre réponse :</label>
+            <textarea id="id_reply" name="reply" required>{{ form.reply.value|default:'' }}</textarea>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-paper-plane"></i> Envoyer la réponse
+            </button>
+            <a href="{% url 'dashboard:message_list' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+            </a>
+        </div>
+    </form>
+    
+    {% if object.reply %}
+    <div class="existing-reply">
+        <div class="reply-header-small">
+            <i class="fas fa-check-circle"></i>
+            <h3>Réponse envoyée</h3>
+        </div>
+        <div class="reply-content">{{ object.reply|linebreaks }}</div>
+        <div class="reply-date">
+            <i class="fas fa-clock"></i> Envoyée le {{ object.replied_at|date:"d/m/Y à H:i" }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mise en forme automatique du texte
+        const textarea = document.getElementById('id_reply');
+        if (textarea) {
+            textarea.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    
+                    this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+                    this.selectionStart = this.selectionEnd = start + 4;
+                }
+            });
+        }
+        
+        // Confirmation avant de quitter si du texte est saisi
+        window.addEventListener('beforeunload', function(e) {
+            if (textarea && textarea.value.trim() !== '') {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    });
+</script>
+{% endblock %}

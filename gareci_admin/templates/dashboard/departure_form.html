@@ -1,0 +1,68 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}{% if form.instance.pk %}Modifier{% else %}Ajouter{% endif %} un départ{% endblock %}
+{% block content %}
+
+
+<div class="departure-form-container">
+    <div class="departure-form-header">
+        <i class="fas fa-bus"></i>
+        <h2>{% if form.instance.pk %}Modifier{% else %}Ajouter{% endif %} un départ</h2>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            {% for field in form %}
+                {% if not forloop.last %}
+                <div class="form-group{% if field.name == 'date' or field.name == 'time' %} datetime-input{% endif %}">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% if field.name == 'date' %}<i class="far fa-calendar-alt"></i>{% endif %}
+                    {% if field.name == 'time' %}<i class="far fa-clock"></i>{% endif %}
+                    {% if field.help_text %}
+                        <span class="helptext">{{ field.help_text }}</span>
+                    {% endif %}
+                    {% if field.errors %}
+                        <div class="errorlist">{{ field.errors }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- Dernier champ (statut) sur une ligne complète -->
+        <div class="form-group">
+            {{ form.is_active.label_tag }}
+            {{ form.is_active }}
+            {% if form.is_active.help_text %}
+                <span class="helptext">{{ form.is_active.help_text }}</span>
+            {% endif %}
+            {% if form.is_active.errors %}
+                <div class="errorlist">{{ form.is_active.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Enregistrer
+            </button>
+            <a href="{% url 'dashboard:departure_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Script pour améliorer les sélecteurs de date/heure -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ajoute des placeholders pour les champs date/time
+        const dateField = document.querySelector('input[type="date"]');
+        const timeField = document.querySelector('input[type="time"]');
+        
+        if (dateField) dateField.placeholder = 'JJ/MM/AAAA';
+        if (timeField) timeField.placeholder = 'HH:MM';
+    });
+</script>
+{% endblock %}

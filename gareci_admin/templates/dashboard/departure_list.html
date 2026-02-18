@@ -1,0 +1,115 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% load dashboard_extras %}
+
+{% block title %}Liste des départs{% endblock %}
+{% block content %}
+
+<div class="departures-container">
+    <div class="departures-header">
+        <h2><i class="fas fa-bus"></i> Liste des départs</h2>
+        <a href="{% url 'dashboard:departure_add' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Ajouter un départ
+        </a>
+    </div>
+
+    <table class="departures-table">
+        <thead>
+            <tr>
+                <th>Trajet</th>
+                <th>Bus</th>
+                <th>Date</th>
+                <th>Heure</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for departure in object_list %}
+            <tr>
+                <td>{{ departure.trip }}</td>
+                <td>{{ departure.bus }}</td>
+                <td class="datetime">{{ departure.date|date:"d/m/Y" }}</td>
+                <td class="datetime">{{ departure.time|time:"H:i" }}</td>
+                <td class="{% if departure.is_active %}status-active{% else %}status-inactive{% endif %}">
+                    {{ departure.is_active|yesno:"Actif,Inactif" }}
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="{% url 'dashboard:departure_edit' departure.pk %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                        <a href="{% url 'dashboard:departure_delete' departure.pk %}" 
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Voulez-vous vraiment supprimer ce départ ?');">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="empty-state">
+                    <i class="fas fa-bus"></i>
+                    <p>Aucun départ enregistré</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!--Départs prévus sur 7 jours-->
+    <section class="table-section">
+        <div class="section-header">
+            <h3>Départs prévus sur 7 jours</h3>
+            <div>
+                <a href="{% url 'dashboard:departure_add' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter un départ</a>
+            </div>
+        </div>
+        
+        {% for date in date_range %}
+            <div class="date-group">
+                <h4>{{ date|date:"l d F Y" }}</h4>
+                <div class="table-responsive">
+                    <table class="departures-table">
+                        <thead>
+                            <tr>
+                                <th>Trajet</th>
+                                <th>Heure</th>
+                                <th>Bus</th>
+                                <th>Places disponibles</th>
+                                <th>Taux d'occupation</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% with date_str=date|date:"Y-m-d" %}
+                            {% with departures=departures_by_date|get:date_str %}
+                            {% for departure_info in departures|default_if_none:empty %}
+                            <tr class="{% if departure_info.available_seats <= 5 %}warning{% endif %}">
+                                <td>{{ departure_info.departure.trip.origin }} → {{ departure_info.departure.trip.destination }}</td>
+                                <td>{{ departure_info.departure.time|time:"H:i" }}</td>
+                                <td>{{ departure_info.departure.bus.name }} ({{ departure_info.departure.bus.capacity }} places)</td>
+                                <td>{{ departure_info.available_seats }}</td>
+                                <td>{{ departure_info.occupancy_rate|floatformat:1 }}%</td>
+                                <td>
+                                    <a href="{% url 'dashboard:departure_edit' departure_info.departure.id %}" class="action-btn edit"><i class="fas fa-edit"></i></a>
+                                    {% if not departure_info.departure.is_active %}
+                                    <span class="status-badge canceled">Désactivé</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr class="no_depart">
+                                <td colspan="6">Aucun départ prévu pour cette date.</td>
+                            </tr>
+                            {% endfor %}
+                            {% endwith %}{% endwith %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+    </section>
+
+{% endblock %}

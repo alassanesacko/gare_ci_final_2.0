@@ -1,0 +1,70 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Supprimer le message{% endblock %}
+{% block content %}
+<div class="delete-container">
+    <div class="delete-header">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h2>Supprimer le message</h2>
+    </div>
+    
+    <div class="confirmation-message">
+        <p>Vous êtes sur le point de supprimer définitivement ce message. Cette action est irréversible.</p>
+    </div>
+    
+    <div class="message-details">
+        <div class="message-meta">
+            <div class="meta-item">
+                <span class="meta-label"><i class="fas fa-user"></i> Expéditeur :</span>
+                <span class="meta-value">{{ object.name }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label"><i class="fas fa-envelope"></i> Email :</span>
+                <span class="meta-value">{{ object.email }}</span>
+            </div>
+            {% if object.phone %}
+            <div class="meta-item">
+                <span class="meta-label"><i class="fas fa-phone"></i> Téléphone :</span>
+                <span class="meta-value">{{ object.phone }}</span>
+            </div>
+            {% endif %}
+            {% if object.created_at %}
+            <div class="meta-item">
+                <span class="meta-label"><i class="fas fa-calendar-alt"></i> Date :</span>
+                <span class="meta-value">{{ object.created_at|date:"d/m/Y H:i" }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="message-content">
+            <p><strong>Sujet :</strong> {{ object.subject|default:"Aucun sujet" }}</p>
+            <p>{{ object.message }}</p>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash-alt"></i> Confirmer la suppression
+            </button>
+            <a href="{% url 'dashboard:message_list' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Confirmation supplémentaire pour éviter les suppressions accidentelles
+        const deleteForm = document.querySelector('form');
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', function(e) {
+                if (!confirm('Attention ! Cette action supprimera définitivement le message. Souhaitez-vous vraiment continuer ?')) {
+                    e.preventDefault();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'dashboard/dashboard_base.html' %}
+
+{% block title %}Confirmer la suppression de la catégorie{% endblock %}
+
+
+{% block content %}
+<div class="delete-container">
+    <div class="delete-header">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h2>Confirmer la suppression</h2>
+    </div>
+    <div class="confirmation-message">
+        <p>Êtes-vous sûr de vouloir supprimer la catégorie&nbsp;?</p>
+        <p><strong>{{ object.name }}</strong></p>
+        <p class="text-danger">Cette action est irréversible.</p>
+    </div>
+    <form method="post">{% csrf_token %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash-alt"></i> Supprimer
+            </button>
+            <a href="{% url 'dashboard:category_list' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

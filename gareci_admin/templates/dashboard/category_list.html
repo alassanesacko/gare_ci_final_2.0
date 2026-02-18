@@ -1,0 +1,49 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Liste des catégories{% endblock %}
+{% block content %}
+
+
+<div class="categories-container">
+    <div class="categories-header">
+        <h2><i class="fas fa-tags"></i> Liste des catégories</h2>
+        <a href="{% url 'dashboard:category_add' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Ajouter une catégorie
+        </a>
+    </div>
+
+    <table class="categories-table">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in object_list %}
+            <tr>
+                <td>{{ category.name }}</td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="{% url 'dashboard:category_edit' category.pk %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                        <a href="{% url 'dashboard:category_delete' category.pk %}" 
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Voulez-vous vraiment supprimer cette catégorie ?');">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2" class="empty-state">
+                    <i class="fas fa-tags"></i>
+                    <p>Aucune catégorie enregistrée</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

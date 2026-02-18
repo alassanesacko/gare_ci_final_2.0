@@ -1,0 +1,24 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Supprimer un départ{% endblock %}
+{% block content %}
+<div class="delete-container">
+    <div class="delete-header">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h2>Confirmer la suppression</h2>
+    </div>
+    <div class="confirmation-message">
+        <p>Voulez-vous vraiment supprimer ce départ&nbsp;?</p>
+        <p><strong>{{ object.trip }} - {{ object.date }} à {{ object.time }}</strong></p>
+    </div>
+    <form method="post">{% csrf_token %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash-alt"></i> Confirmer la suppression
+            </button>
+            <a href="{% url 'dashboard:departure_list' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

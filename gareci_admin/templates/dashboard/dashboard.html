@@ -1,0 +1,193 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% load dashboard_extras %}
+{% block title %}Tableau de bord{% endblock %}
+
+{% block content %}
+    <div class="stats-section">
+        <div class="stat-card">
+            <div class="stat-icon bg-blue">
+                <i class="fas fa-ticket-alt"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_reservations }}</h3>
+                <p>Total Réservations</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-green">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_users }}</h3>
+                <p>Total Utilisateurs</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon bg-orange">
+                <i class="fas fa-route"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ upcoming_trips }}</h3>
+                <p>Trajets à venir</p>
+            </div>
+        </div>
+    </div>
+
+    <section class="table-section">
+        <div class="section-header">
+            <h3>Réservations récentes</h3>
+            <a href="{% url 'dashboard:reservation_list' %}" class="view-all">Voir tout</a>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Client</th>
+                        <th>Trajet</th>
+                        <th>Date départ</th>
+                        <th>Date réservation</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reservation in recent_reservations %}
+                    <tr>
+                        <td>#{{ reservation.id }}</td>
+                        <td>{{ reservation.user.username }}</td>
+                        <td>{{ reservation.departure.trip.origin }} → {{ reservation.departure.trip.destination }}</td>
+                        <td>{{ reservation.departure.date }} {{ reservation.departure.time|time:'H:i' }}</td>
+                        <td>{{ reservation.booked_at|date:'d/m/Y' }} à {{ reservation.booked_at|time:'H:i' }}</td>
+                        <td>
+                            <span class="status-badge 
+                                {% if reservation.status == 'P' %}pending
+                                {% elif reservation.status == 'C' %}confirmed
+                                {% elif reservation.status == 'X' %}canceled
+                                {% endif %}">
+                                {% if reservation.status == 'P' %}En attente
+                                {% elif reservation.status == 'C' %}Confirmée
+                                {% elif reservation.status == 'X' %}Annulée
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if reservation.status == 'P' %}
+                                <form method="post" action="{% url 'dashboard:reservation_confirm' reservation.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="action-btn confirm"><i class="fas fa-check"></i></button>
+                                </form>
+                            {% endif %}
+                            <a href="{% url 'dashboard:reservation_edit' reservation.id %}" class="action-btn edit"><i class="fas fa-edit"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">Aucune réservation récente.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="departures-container">
+        <div class="departures-header">
+            <h2><i class="fas fa-bus"></i> Liste des départs</h2>
+            <a href="{% url 'dashboard:departure_add' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Ajouter un départ
+            </a>
+        </div>
+
+        <table class="departures-table">
+            <thead>
+                <tr>
+                    <th>Trajet</th>
+                    <th>Bus</th>
+                    <th>Date</th>
+                    <th>Heure</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for departure in object_list %}
+                <tr>
+                    <td>{{ departure.trip }}</td>
+                    <td>{{ departure.bus }}</td>
+                    <td class="datetime">{{ departure.date|date:"d/m/Y" }}</td>
+                    <td class="datetime">{{ departure.time|time:"H:i" }}</td>
+                    <td class="{% if departure.is_active %}status-active{% else %}status-inactive{% endif %}">
+                        {{ departure.is_active|yesno:"Actif,Inactif" }}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'dashboard:departure_edit' departure.pk %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Modifier
+                            </a>
+                            <a href="{% url 'dashboard:departure_delete' departure.pk %}" 
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Voulez-vous vraiment supprimer ce départ ?');">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <i class="fas fa-bus"></i>
+                        <p>Aucun départ enregistré</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if recent_messages %}
+    <section class="table-section">
+        <div class="section-header">
+            <h3>Messages récents</h3>
+            <a href="{% url 'dashboard:message_list' %}" class="view-all">Voir tout</a>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>De</th>
+                        <th>Email</th>
+                        <th>Date</th>
+                        <th>État</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for message in recent_messages %}
+                    <tr>
+                        <td>{{ message.name }}</td>
+                        <td>{{ message.email }}</td>
+                        <td>{{ message.submitted_at|date:'d/m/Y H:i' }}</td>
+                        <td>
+                            <span class="status-badge {% if message.replied_at %}confirmed{% else %}pending{% endif %}">
+                                {% if message.replied_at %}Répondu{% else %}En attente{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'dashboard:message_reply' message.id %}" class="action-btn {% if message.replied_at %}view{% else %}edit{% endif %}">
+                                <i class="fas fa-{% if message.replied_at %}eye{% else %}reply{% endif %}"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+    
+{% endblock %}

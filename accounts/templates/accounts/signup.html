@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Inscription - GareCI{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-user-plus"></i>
+            <h2>Créer un compte</h2>
+        </div>
+
+        <form method="post" action="{% url 'accounts:register' %}" class="auth-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="id_first_name">
+                    <i class="fas fa-user"></i> Prénom
+                </label>
+                <input type="text" name="first_name" id="id_first_name" class="form-control {% if form.first_name.errors %}is-invalid{% endif %}" required value="{{ form.first_name.value|default:'' }}">
+                {% if form.first_name.errors %}
+                <div class="field-error">
+                    {% for error in form.first_name.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_last_name">
+                    <i class="fas fa-user"></i> Nom de famille
+                </label>
+                <input type="text" name="last_name" id="id_last_name" class="form-control {% if form.last_name.errors %}is-invalid{% endif %}" required value="{{ form.last_name.value|default:'' }}">
+                {% if form.last_name.errors %}
+                <div class="field-error">
+                    {% for error in form.last_name.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_username">
+                    <i class="fas fa-user"></i> Nom d'utilisateur
+                </label>
+                <input type="text" name="username" id="id_username" class="form-control {% if form.username.errors %}is-invalid{% endif %}" required value="{{ form.username.value|default:'' }}">
+                {% if form.username.errors %}
+                <div class="field-error">
+                    {% for error in form.username.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_email">
+                    <i class="fas fa-envelope"></i> Adresse email
+                </label>
+                <input type="email" name="email" id="id_email" class="form-control {% if form.email.errors %}is-invalid{% endif %}" required value="{{ form.email.value|default:'' }}">
+                {% if form.email.errors %}
+                <div class="field-error">
+                    {% for error in form.email.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_phone">
+                    <i class="fas fa-phone"></i> Numéro de téléphone (optionnel)
+                </label>
+                <input type="tel" name="phone" id="id_phone" class="form-control {% if form.phone.errors %}is-invalid{% endif %}" value="{{ form.phone.value|default:'' }}">
+                {% if form.phone.errors %}
+                <div class="field-error">
+                    {% for error in form.phone.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_password1">
+                    <i class="fas fa-lock"></i> Mot de passe
+                </label>
+                <input type="password" name="password1" id="id_password1" class="form-control {% if form.password1.errors %}is-invalid{% endif %}" required>
+                {% if form.password1.errors %}
+                <div class="field-error">
+                    {% for error in form.password1.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_password2">
+                    <i class="fas fa-lock"></i> Confirmation
+                </label>
+                <input type="password" name="password2" id="id_password2" class="form-control {% if form.password2.errors %}is-invalid{% endif %}" required>
+                {% if form.password2.errors %}
+                <div class="field-error">
+                    {% for error in form.password2.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-user-plus"></i> S'inscrire
+                </button>
+            </div>
+
+            <div class="auth-footer">
+                <p>Déjà inscrit ? <a href="{% url 'accounts:login' %}" class="auth-link">Connectez-vous ici</a></p>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

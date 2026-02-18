@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Mes Réservations - GareCI{% endblock %}
+
+{% block content %}
+<div class="reservations-container">
+    <div class="reservations-header">
+        <h1><i class="fas fa-ticket-alt"></i> Mes Réservations</h1>
+        <p class="subtitle">Historique de vos voyages avec GareCI</p>
+    </div>
+
+    {% if user.is_authenticated %}
+        {% if reservations %}
+        <div class="reservations-table-container">
+            <table class="reservations-table">
+                <thead>
+                    <tr>
+                        <th>Trajet</th>
+                        <th>Date</th>
+                        <th>Heure</th>
+                        <th>Bus</th>
+                        <th>Prix</th>
+                        <th>Statut</th>
+                        <th>Réservé le</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reservation in reservations %}
+                    <tr class="reservation-row {% if reservation.status == 'X' %}cancelled{% elif reservation.status == 'P' %}pending{% endif %}">
+                        <td data-label="Trajet">
+                            <div class="trip-info">
+                                <span class="origin">{{ reservation.departure.trip.origin }}</span>
+                                <i class="fas fa-arrow-right"></i>
+                                <span class="destination">{{ reservation.departure.trip.destination }}</span>
+                            </div>
+                        </td>
+                        <td data-label="Date">{{ reservation.departure.date|date:"d/m/Y" }}</td>
+                        <td data-label="Heure">{{ reservation.departure.time|time:'H:i' }}</td>
+                        <td data-label="Bus">
+                            <div class="bus-info">
+                                <i class="fas fa-bus"></i> {{ reservation.departure.bus }}
+                            </div>
+                        </td>
+                        <td data-label="Prix">{{ reservation.departure.trip.price }} FCFA</td>
+                        <td data-label="Statut">
+                            <span class="status-badge 
+                                {% if reservation.status == 'C' %}confirmed
+                                {% elif reservation.status == 'P' %}pending
+                                {% else %}cancelled{% endif %}">
+                                {% if reservation.status == 'P' %}En attente
+                                {% elif reservation.status == 'C' %}Confirmée
+                                {% elif reservation.status == 'X' %}Annulée{% endif %}
+                            </span>
+                        </td>
+                        <td data-label="Réservé le">{{ reservation.booked_at|date:'d/m/Y H:i' }}</td>
+                        <td data-label="Actions">
+                            <a href="{% url 'reservations:download_ticket' reservation.pk %}" class="btn-action btn-download" title="Télécharger le ticket">
+                                <i class="fas fa-download"></i> Télécharger
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="no-results">
+            <i class="fas fa-ticket-alt"></i>
+            <h3>Vous n'avez aucune réservation</h3>
+            <p>Commencez par rechercher un trajet pour réserver votre voyage.</p>
+            <a href="{% url 'trips:home' %}" class="btn btn-primary">
+                <i class="fas fa-search"></i> Rechercher un trajet
+            </a>
+        </div>
+        {% endif %}
+    {% else %}
+    <div class="auth-required">
+        <i class="fas fa-lock"></i>
+        <h3>Connexion requise</h3>
+        <p>Vous devez vous connecter pour accéder à vos réservations.</p>
+        <div class="auth-buttons">
+            <a href="{% url 'accounts:login' %}" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt"></i> Se connecter
+            </a>
+            <a href="{% url 'accounts:register' %}" class="btn btn-outline">
+                <i class="fas fa-user-plus"></i> Créer un compte
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

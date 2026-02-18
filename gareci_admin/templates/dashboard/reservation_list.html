@@ -1,0 +1,82 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Toutes les réservations{% endblock %}
+{% block content %}
+<div class="reservations-container">
+    <div class="reservations-header">
+        <h2><i class="fas fa-list-alt"></i> Toutes les réservations</h2>
+        <a href="{% url 'dashboard:index' %}" class="btn btn-default">
+            <i class="fas fa-arrow-left"></i> Retour au dashboard
+        </a>
+    </div>
+
+    <table class="reservations-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Client</th>
+                <th>Trajet</th>
+                <th>Date départ</th>
+                <th>Date réservation</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reservation in reservations %}
+            <tr>
+                <td>#{{ reservation.id }}</td>
+                <td>{{ reservation.user.username }}</td>
+                <td>{{ reservation.departure.trip.origin }} → {{ reservation.departure.trip.destination }}</td>
+                <td>{{ reservation.departure.date|date:"d/m/Y" }} {{ reservation.departure.time|time:'H:i' }}</td>
+                <td>{{ reservation.booked_at|date:'d/m/Y H:i' }}</td>
+                <td>
+                    <span class="status-badge 
+                        {% if reservation.status == 'P' %}status-pending
+                        {% elif reservation.status == 'C' %}status-confirmed
+                        {% elif reservation.status == 'X' %}status-cancelled{% endif %}">
+                        {% if reservation.status == 'P' %}En attente
+                        {% elif reservation.status == 'C' %}Confirmée
+                        {% elif reservation.status == 'X' %}Annulée{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        {% if reservation.status == 'P' %}
+                            <form method="post" action="{% url 'dashboard:reservation_confirm' reservation.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i> Confirmer
+                                </button>
+                            </form>
+                        {% elif reservation.status == 'C' %}
+                            <button class="btn btn-sm btn-success" disabled style="pointer-events: none; opacity: 0.7;">
+                                <i class="fas fa-check"></i> Confirmer
+                            </button>
+                        {% elif reservation.status == 'X' %}
+                            <button class="btn btn-sm btn-success" disabled style="pointer-events: none; opacity: 0.7;">
+                                <i class="fas fa-check"></i> Confirmer
+                            </button>
+                        {% endif %}
+                        <a href="{% url 'dashboard:reservation_edit' reservation.id %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                        <a href="{% url 'dashboard:reservation_delete' reservation.id %}" 
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Voulez-vous vraiment supprimer cette réservation ?');">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="empty-state">
+                    <i class="fas fa-ticket-alt"></i>
+                    <p>Aucune réservation trouvée</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

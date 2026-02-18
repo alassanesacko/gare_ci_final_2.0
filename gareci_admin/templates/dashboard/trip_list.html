@@ -1,0 +1,57 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Liste des trajets{% endblock %}
+{% block content %}
+
+
+<div class="trips-container">
+    <div class="trips-header">
+        <h2><i class="fas fa-route"></i> Liste des trajets</h2>
+        <a href="{% url 'dashboard:trip_add' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Ajouter un trajet
+        </a>
+    </div>
+
+    <table class="trips-table">
+        <thead>
+            <tr>
+                <th>Origine</th>
+                <th>Destination</th>
+                <th>Catégorie</th>
+                <th>Description</th>
+                <th>Prix</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trip in object_list %}
+            <tr>
+                <td>{{ trip.origin }}</td>
+                <td>{{ trip.destination }}</td>
+                <td>{{ trip.category }}</td>
+                <td>{{ trip.description|truncatechars:50 }}</td>
+                <td class="price">{{ trip.price }} FCFA</td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="{% url 'dashboard:trip_edit' trip.pk %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                        <a href="{% url 'dashboard:trip_delete' trip.pk %}" 
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Voulez-vous vraiment supprimer ce trajet ?');">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="empty-state">
+                    <i class="fas fa-route"></i>
+                    <p>Aucun trajet enregistré</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
