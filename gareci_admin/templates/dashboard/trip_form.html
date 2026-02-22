@@ -1,8 +1,6 @@
 {% extends 'dashboard/dashboard_base.html' %}
 {% block title %}{% if form.instance.pk %}Modifier{% else %}Ajouter{% endif %} un trajet{% endblock %}
 {% block content %}
-
-
 <div class="trip-form-container">
     <div class="trip-form-header">
         <i class="fas fa-route"></i>
@@ -11,77 +9,151 @@
 
     <form method="post">
         {% csrf_token %}
-        
+
         <div class="form-row">
             {% for field in form %}
-                {% if field.name != 'duration' %}
-                <div class="form-group">
-                    {{ field.label_tag }}
-                    {{ field }}
-                    {% if field.help_text %}
-                        <span class="helptext">{{ field.help_text }}</span>
-                    {% endif %}
-                    {% if field.errors %}
-                        <div class="errorlist">{{ field.errors }}</div>
-                    {% endif %}
-                </div>
+            <div class="form-group">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}
+                <span class="helptext">{{ field.help_text }}</span>
                 {% endif %}
+                {% if field.errors %}
+                <div class="errorlist">{{ field.errors }}</div>
+                {% endif %}
+            </div>
             {% endfor %}
         </div>
-        
-        <!-- Champ durée avec format spécial -->
-        {% if form.duration %}
-        <div class="form-group">
-            <label>Durée du trajet</label>
-            <div class="duration-input">
-                <input type="number" name="duration_hours" value="{{ form.duration.value.hours }}" min="0" max="23" class="form-control">
-                <span>heures</span>
-                <input type="number" name="duration_minutes" value="{{ form.duration.value.minutes }}" min="0" max="59" class="form-control">
-                <span>minutes</span>
+
+        <section class="etapes-section">
+            <h3>Etapes du trajet</h3>
+            {{ etape_formset.management_form }}
+            {% if etape_formset.non_form_errors %}
+            <div class="errorlist">{{ etape_formset.non_form_errors }}</div>
+            {% endif %}
+
+            <table class="trips-table etapes-table">
+                <thead>
+                    <tr>
+                        <th class="etapes-col-ordre">Ordre</th>
+                        <th>Segment</th>
+                        <th class="etapes-col-delete">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for etape_form in etape_formset %}
+                    <tr class="etape-row">
+                        <td>
+                            {% for hidden in etape_form.hidden_fields %}
+                            {{ hidden }}
+                            {% endfor %}
+                            <span class="etape-order-number">{{ forloop.counter }}</span>
+                        </td>
+                        <td>
+                            {{ etape_form.segment }}
+                            {% if etape_form.segment.errors %}
+                            <div class="errorlist">{{ etape_form.segment.errors }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="etape-delete-cell">
+                            {% if etape_form.DELETE %}
+                            <label class="delete-toggle">
+                                {{ etape_form.DELETE }}
+                                <span>Marquer</span>
+                            </label>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="etapes-actions">
+                <button type="button" id="add-etape-btn" class="btn btn-secondary">
+                    <i class="fas fa-plus"></i> Ajouter une etape
+                </button>
             </div>
-            {% if form.duration.help_text %}
-                <span class="helptext">{{ form.duration.help_text }}</span>
-            {% endif %}
-            {% if form.duration.errors %}
-                <div class="errorlist">{{ form.duration.errors }}</div>
-            {% endif %}
-        </div>
-        {% endif %}
-        
+        </section>
+
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Enregistrer
             </button>
             <a href="{% url 'dashboard:trip_list' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Retour à la liste
+                <i class="fas fa-arrow-left"></i> Retour a la liste
             </a>
         </div>
     </form>
 </div>
 
+<template id="etape-empty-row">
+    <tr class="etape-row etape-row-new">
+        <td>
+            {% for hidden in etape_formset.empty_form.hidden_fields %}
+            {{ hidden }}
+            {% endfor %}
+            <span class="etape-order-number"></span>
+        </td>
+        <td>
+            {{ etape_formset.empty_form.segment }}
+        </td>
+        <td class="etape-delete-cell">
+            <button type="button" class="btn btn-sm btn-danger remove-etape-btn">
+                <i class="fas fa-times"></i> Retirer
+            </button>
+        </td>
+    </tr>
+</template>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Amélioration de l'expérience utilisateur pour les champs numériques
-        const numberInputs = document.querySelectorAll('input[type="number"]');
-        numberInputs.forEach(input => {
-            input.addEventListener('change', function() {
-                if (this.value < 0) this.value = 0;
-            });
-        });
-        
-        // Gestion spéciale pour la durée si nécessaire
-        const durationHours = document.querySelector('input[name="duration_hours"]');
-        const durationMinutes = document.querySelector('input[name="duration_minutes"]');
-        
-        if (durationHours && durationMinutes) {
-            durationHours.addEventListener('change', function() {
-                if (this.value > 23) this.value = 23;
-            });
-            
-            durationMinutes.addEventListener('change', function() {
-                if (this.value > 59) this.value = 59;
-            });
+document.addEventListener("DOMContentLoaded", function () {
+    const addBtn = document.getElementById("add-etape-btn");
+    const totalFormsInput = document.getElementById("id_etapes-TOTAL_FORMS");
+    const tbody = document.querySelector(".etapes-table tbody");
+    const template = document.getElementById("etape-empty-row");
+
+    if (!addBtn || !totalFormsInput || !tbody || !template) {
+        return;
+    }
+
+    addBtn.addEventListener("click", function () {
+        const formIndex = parseInt(totalFormsInput.value, 10);
+        const rowHtml = template.innerHTML.replace(/__prefix__/g, formIndex);
+        tbody.insertAdjacentHTML("beforeend", rowHtml);
+        totalFormsInput.value = formIndex + 1;
+        const lastRow = tbody.lastElementChild;
+        if (window.initSearchableSelects && lastRow) {
+            window.initSearchableSelects(lastRow);
         }
+        renumberEtapes();
     });
+
+    tbody.addEventListener("click", function (event) {
+        const removeBtn = event.target.closest(".remove-etape-btn");
+        if (!removeBtn) {
+            return;
+        }
+        const row = removeBtn.closest("tr");
+        if (!row) {
+            return;
+        }
+        row.remove();
+        renumberEtapes();
+    });
+
+    function renumberEtapes() {
+        const rows = tbody.querySelectorAll("tr.etape-row");
+        rows.forEach(function (row, idx) {
+            const orderNode = row.querySelector(".etape-order-number");
+            if (orderNode) {
+                orderNode.textContent = String(idx + 1);
+            }
+        });
+    }
+
+    renumberEtapes();
+});
 </script>
 {% endblock %}

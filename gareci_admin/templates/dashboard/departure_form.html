@@ -15,11 +15,11 @@
         <div class="form-row">
             {% for field in form %}
                 {% if not forloop.last %}
-                <div class="form-group{% if field.name == 'date' or field.name == 'time' %} datetime-input{% endif %}">
+                <div class="form-group{% if field.name == 'date_depart' or field.name == 'date_arrivee_estimee' %} datetime-input{% endif %}">
                     {{ field.label_tag }}
                     {{ field }}
-                    {% if field.name == 'date' %}<i class="far fa-calendar-alt"></i>{% endif %}
-                    {% if field.name == 'time' %}<i class="far fa-clock"></i>{% endif %}
+                    {% if field.name == 'date_depart' %}<i class="far fa-calendar-alt"></i>{% endif %}
+                    {% if field.name == 'date_arrivee_estimee' %}<i class="far fa-clock"></i>{% endif %}
                     {% if field.help_text %}
                         <span class="helptext">{{ field.help_text }}</span>
                     {% endif %}
@@ -33,13 +33,13 @@
         
         <!-- Dernier champ (statut) sur une ligne complète -->
         <div class="form-group">
-            {{ form.is_active.label_tag }}
-            {{ form.is_active }}
-            {% if form.is_active.help_text %}
-                <span class="helptext">{{ form.is_active.help_text }}</span>
+            {{ form.actif.label_tag }}
+            {{ form.actif }}
+            {% if form.actif.help_text %}
+                <span class="helptext">{{ form.actif.help_text }}</span>
             {% endif %}
-            {% if form.is_active.errors %}
-                <div class="errorlist">{{ form.is_active.errors }}</div>
+            {% if form.actif.errors %}
+                <div class="errorlist">{{ form.actif.errors }}</div>
             {% endif %}
         </div>
         

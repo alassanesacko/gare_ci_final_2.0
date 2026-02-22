@@ -3,6 +3,10 @@ from django.urls import path
 from .views import (
     BusListView, BusCreateView, BusUpdateView, BusDeleteView,
     CategoryListView, CategoryCreateView, CategoryUpdateView, CategoryDeleteView,
+    VilleListView, VilleCreateView, VilleUpdateView, VilleDeleteView,
+    ArretListView, ArretCreateView, ArretUpdateView, ArretDeleteView,
+    SegmentListView, SegmentCreateView, SegmentUpdateView, SegmentDeleteView,
+    ConducteurListView, ConducteurCreateView, ConducteurUpdateView, ConducteurDeleteView,
     TripListView, TripCreateView, TripUpdateView, TripDeleteView,
     DepartureListView, DepartureCreateView, DepartureUpdateView, DepartureDeleteView,
     MessageListView, ReservationAdminListView,
@@ -27,6 +31,26 @@ urlpatterns = [
     path('categories/add/', CategoryCreateView.as_view(), name='category_add'),
     path('categories/<int:pk>/edit/', CategoryUpdateView.as_view(), name='category_edit'),
     path('categories/<int:pk>/delete/', CategoryDeleteView.as_view(), name='category_delete'),
+    # Villes
+    path('villes/', VilleListView.as_view(), name='ville_list'),
+    path('villes/add/', VilleCreateView.as_view(), name='ville_add'),
+    path('villes/<int:pk>/edit/', VilleUpdateView.as_view(), name='ville_edit'),
+    path('villes/<int:pk>/delete/', VilleDeleteView.as_view(), name='ville_delete'),
+    # Arrets
+    path('arrets/', ArretListView.as_view(), name='arret_list'),
+    path('arrets/add/', ArretCreateView.as_view(), name='arret_add'),
+    path('arrets/<int:pk>/edit/', ArretUpdateView.as_view(), name='arret_edit'),
+    path('arrets/<int:pk>/delete/', ArretDeleteView.as_view(), name='arret_delete'),
+    # Segments
+    path('segments/', SegmentListView.as_view(), name='segment_list'),
+    path('segments/add/', SegmentCreateView.as_view(), name='segment_add'),
+    path('segments/<int:pk>/edit/', SegmentUpdateView.as_view(), name='segment_edit'),
+    path('segments/<int:pk>/delete/', SegmentDeleteView.as_view(), name='segment_delete'),
+    # Conducteurs
+    path('conducteurs/', ConducteurListView.as_view(), name='conducteur_list'),
+    path('conducteurs/add/', ConducteurCreateView.as_view(), name='conducteur_add'),
+    path('conducteurs/<int:pk>/edit/', ConducteurUpdateView.as_view(), name='conducteur_edit'),
+    path('conducteurs/<int:pk>/delete/', ConducteurDeleteView.as_view(), name='conducteur_delete'),
     # Trajets
     path('trips/', TripListView.as_view(), name='trip_list'),
     path('trips/add/', TripCreateView.as_view(), name='trip_add'),

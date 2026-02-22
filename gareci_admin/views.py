@@ -1,15 +1,14 @@
-from django.urls import reverse_lazy
+﻿from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
 from django.shortcuts import redirect, get_object_or_404, render
 from django.utils import timezone
 from django.core.mail import send_mail
-from django.utils.timezone import now
-from datetime import timedelta, datetime
 
-from trips.models import Bus, Category, Trip, Departure
-from reservations.models import ContactMessage, Reservation
+from trips.models import Arret, Bus, Category, Departure, Segment, Trip, Ville
+from .models import Conducteur
+from reservations.models import ContactMessage, Reservation, ReservationStatus
 from gareci_admin.utils import StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin 
-from .forms import ContactReplyForm
+from .forms import ArretForm, ContactReplyForm, DepartureAdminForm, EtapeTrajetFormSet, SegmentForm, TripAdminForm, VilleForm
 from django.contrib.auth import get_user_model
 
 
@@ -23,7 +22,7 @@ class BusListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin , ListView
 
 class BusCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin , CreateView):
     model = Bus
-    fields = ['name', 'capacity']
+    fields = ['immatriculation', 'modele', 'capacite', 'categorie', 'annee_fabrication', 'en_service', 'photo', 'derniere_revision']
     template_name = 'dashboard/bus_form.html'
     active_tab_value ='buses'
     breadcrumb_title = 'Bus > Ajouter Bus'
@@ -31,7 +30,7 @@ class BusCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin , Create
 
 class BusUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , UpdateView):
     model = Bus
-    fields = ['name', 'capacity']
+    fields = ['immatriculation', 'modele', 'capacite', 'categorie', 'annee_fabrication', 'en_service', 'photo', 'derniere_revision']
     template_name = 'dashboard/bus_form.html'
     active_tab_value ='buses'
     breadcrumb_title = 'Bus > Modifier Bus'
@@ -44,37 +43,172 @@ class BusDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , DeleteV
     breadcrumb_title = 'Bus > Suppression Bus'
     success_url = reverse_lazy('dashboard:bus_list')
 
-# Gestion des Catégories
+# Gestion des Categories
 class CategoryListView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , ListView):
     model = Category
     template_name = 'dashboard/category_list.html'
     active_tab_value ='categories'
-    breadcrumb_title = 'Catégories'
+    breadcrumb_title = 'Categories'
 
 class CategoryCreateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , CreateView):
     model = Category
-    fields = ['name']
+    fields = ['nom', 'niveau', 'prix_multiplicateur', 'a_wifi', 'a_climatisation', 'a_prise_usb', 'a_wc', 'a_repas', 'a_couchette']
     template_name = 'dashboard/category_form.html'
-    template_name = 'home.html'
 
     active_tab_value ='categories'
-    breadcrumb_title = 'Catégories > Ajouter Catégories'
+    breadcrumb_title = 'Categories > Ajouter Categories'
     success_url = reverse_lazy('dashboard:category_list')
 
 class CategoryUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , UpdateView):
     model = Category
-    fields = ['name']
+    fields = ['nom', 'niveau', 'prix_multiplicateur', 'a_wifi', 'a_climatisation', 'a_prise_usb', 'a_wc', 'a_repas', 'a_couchette']
     template_name = 'dashboard/category_form.html'
     active_tab_value ='categories'
-    breadcrumb_title = 'Catégories > Modifier Catégories'
+    breadcrumb_title = 'Categories > Modifier Categories'
     success_url = reverse_lazy('dashboard:category_list')
 
 class CategoryDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , DeleteView):
     model = Category
     template_name = 'dashboard/category_confirm_delete.html'
     active_tab_value ='categories'
-    breadcrumb_title = 'Catégories > Suppression Catégories'
+    breadcrumb_title = 'Categories > Suppression Categories'
     success_url = reverse_lazy('dashboard:category_list')
+
+
+# Gestion des Villes
+class VilleListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, ListView):
+    model = Ville
+    template_name = "dashboard/ville_list.html"
+    active_tab_value = "villes"
+    breadcrumb_title = "Villes"
+
+
+class VilleCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateView):
+    model = Ville
+    form_class = VilleForm
+    template_name = "dashboard/ville_form.html"
+    active_tab_value = "villes"
+    breadcrumb_title = "Villes > Ajouter Ville"
+    success_url = reverse_lazy("dashboard:ville_list")
+
+
+class VilleUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, UpdateView):
+    model = Ville
+    form_class = VilleForm
+    template_name = "dashboard/ville_form.html"
+    active_tab_value = "villes"
+    breadcrumb_title = "Villes > Modifier Ville"
+    success_url = reverse_lazy("dashboard:ville_list")
+
+
+class VilleDeleteView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, DeleteView):
+    model = Ville
+    template_name = "dashboard/ville_confirm_delete.html"
+    active_tab_value = "villes"
+    breadcrumb_title = "Villes > Suppression Ville"
+    success_url = reverse_lazy("dashboard:ville_list")
+
+
+# Gestion des Arrets
+class ArretListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, ListView):
+    model = Arret
+    template_name = "dashboard/arret_list.html"
+    active_tab_value = "arrets"
+    breadcrumb_title = "Arrets"
+
+
+class ArretCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateView):
+    model = Arret
+    form_class = ArretForm
+    template_name = "dashboard/arret_form.html"
+    active_tab_value = "arrets"
+    breadcrumb_title = "Arrets > Ajouter Arret"
+    success_url = reverse_lazy("dashboard:arret_list")
+
+
+class ArretUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, UpdateView):
+    model = Arret
+    form_class = ArretForm
+    template_name = "dashboard/arret_form.html"
+    active_tab_value = "arrets"
+    breadcrumb_title = "Arrets > Modifier Arret"
+    success_url = reverse_lazy("dashboard:arret_list")
+
+
+class ArretDeleteView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, DeleteView):
+    model = Arret
+    template_name = "dashboard/arret_confirm_delete.html"
+    active_tab_value = "arrets"
+    breadcrumb_title = "Arrets > Suppression Arret"
+    success_url = reverse_lazy("dashboard:arret_list")
+
+
+# Gestion des Segments
+class SegmentListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, ListView):
+    model = Segment
+    template_name = "dashboard/segment_list.html"
+    active_tab_value = "segments"
+    breadcrumb_title = "Segments"
+
+
+class SegmentCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateView):
+    model = Segment
+    form_class = SegmentForm
+    template_name = "dashboard/segment_form.html"
+    active_tab_value = "segments"
+    breadcrumb_title = "Segments > Ajouter Segment"
+    success_url = reverse_lazy("dashboard:segment_list")
+
+
+class SegmentUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, UpdateView):
+    model = Segment
+    form_class = SegmentForm
+    template_name = "dashboard/segment_form.html"
+    active_tab_value = "segments"
+    breadcrumb_title = "Segments > Modifier Segment"
+    success_url = reverse_lazy("dashboard:segment_list")
+
+
+class SegmentDeleteView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, DeleteView):
+    model = Segment
+    template_name = "dashboard/segment_confirm_delete.html"
+    active_tab_value = "segments"
+    breadcrumb_title = "Segments > Suppression Segment"
+    success_url = reverse_lazy("dashboard:segment_list")
+
+
+# Gestion des Conducteurs
+class ConducteurListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, ListView):
+    model = Conducteur
+    template_name = 'dashboard/conducteur_list.html'
+    active_tab_value = 'conducteurs'
+    breadcrumb_title = 'Conducteurs'
+
+
+class ConducteurCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateView):
+    model = Conducteur
+    fields = ['nom', 'prenom', 'cin', 'telephone', 'email', 'date_embauche', 'numero_permis', 'type_permis', 'date_expiration_permis', 'statut', 'photo']
+    template_name = 'dashboard/conducteur_form.html'
+    active_tab_value = 'conducteurs'
+    breadcrumb_title = 'Conducteurs > Ajouter Conducteur'
+    success_url = reverse_lazy('dashboard:conducteur_list')
+
+
+class ConducteurUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, UpdateView):
+    model = Conducteur
+    fields = ['nom', 'prenom', 'cin', 'telephone', 'email', 'date_embauche', 'numero_permis', 'type_permis', 'date_expiration_permis', 'statut', 'photo']
+    template_name = 'dashboard/conducteur_form.html'
+    active_tab_value = 'conducteurs'
+    breadcrumb_title = 'Conducteurs > Modifier Conducteur'
+    success_url = reverse_lazy('dashboard:conducteur_list')
+
+
+class ConducteurDeleteView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, DeleteView):
+    model = Conducteur
+    template_name = 'dashboard/conducteur_confirm_delete.html'
+    active_tab_value = 'conducteurs'
+    breadcrumb_title = 'Conducteurs > Suppression Conducteur'
+    success_url = reverse_lazy('dashboard:conducteur_list')
 
 # Gestion des Trajets (Trip)
 class TripListView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , ListView):
@@ -83,21 +217,77 @@ class TripListView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , ListView
     active_tab_value ='trips'
     breadcrumb_title = 'Trajets'
 
+    def get_queryset(self):
+        return (
+            Trip.objects.select_related("ville_depart", "ville_arrivee", "arret_depart", "arret_arrivee")
+            .prefetch_related("etapetrajet_set__segment__arret_depart", "etapetrajet_set__segment__arret_arrivee")
+            .order_by("nom")
+        )
+
 class TripCreateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , CreateView):
     model = Trip
-    fields = ['origin', 'destination', 'category', 'description', 'price']
+    form_class = TripAdminForm
     template_name = 'dashboard/trip_form.html'
     active_tab_value ='trips'
     breadcrumb_title = 'Trajets > Ajouter Trajets'
     success_url = reverse_lazy('dashboard:trip_list')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context["etape_formset"] = EtapeTrajetFormSet(self.request.POST, prefix="etapes")
+        else:
+            context["etape_formset"] = EtapeTrajetFormSet(prefix="etapes")
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        etape_formset = context["etape_formset"]
+        etape_formset.expected_trip_start_id = form.cleaned_data["arret_depart"].id
+        etape_formset.expected_trip_end_id = form.cleaned_data["arret_arrivee"].id
+        if not etape_formset.is_valid():
+            return self.form_invalid(form)
+
+        self.object = form.save()
+        etape_formset.instance = self.object
+        etape_formset.save()
+        return redirect(self.success_url)
+
 class TripUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , UpdateView):
     model = Trip
-    fields = ['origin', 'destination', 'category', 'description', 'price']
+    form_class = TripAdminForm
     template_name = 'dashboard/trip_form.html'
     active_tab_value ='trips'
     breadcrumb_title = 'Trajets > Modifier Trajets'
     success_url = reverse_lazy('dashboard:trip_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context["etape_formset"] = EtapeTrajetFormSet(
+                self.request.POST,
+                instance=self.object,
+                prefix="etapes",
+            )
+        else:
+            context["etape_formset"] = EtapeTrajetFormSet(
+                instance=self.object,
+                prefix="etapes",
+            )
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        etape_formset = context["etape_formset"]
+        etape_formset.expected_trip_start_id = form.cleaned_data["arret_depart"].id
+        etape_formset.expected_trip_end_id = form.cleaned_data["arret_arrivee"].id
+        if not etape_formset.is_valid():
+            return self.form_invalid(form)
+
+        self.object = form.save()
+        etape_formset.instance = self.object
+        etape_formset.save()
+        return redirect(self.success_url)
 
 class TripDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , DeleteView):
     model = Trip
@@ -106,72 +296,38 @@ class TripDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , Delete
     breadcrumb_title = 'Trajets > Suppression Trajets'
     success_url = reverse_lazy('dashboard:trip_list')
 
-# Gestion des Départs (Departure)
+# Gestion des Departs (Departure)
 class DepartureListView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , ListView):
     model = Departure
     template_name = 'dashboard/departure_list.html'
     active_tab_value ='departures'
-    breadcrumb_title = 'Départs'
+    breadcrumb_title = 'Departs'
 
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        today = timezone.now().date()
-        end_date = today + timedelta(days=7)
-        upcoming_departures = Departure.objects.select_related('trip', 'bus').prefetch_related('reservation_set').filter(
-            date__gte=today,
-            date__lte=end_date,
-        ).order_by('date', 'time')
-
-        departures_by_date = {}
-        for departure in upcoming_departures:
-            date_str = departure.date.strftime('%Y-%m-%d')
-            if date_str not in departures_by_date:
-                departures_by_date[date_str] = []
-
-            reservations_count = departure.reservation_set.filter(status__in=['P', 'C']).count()
-            bus_capacity = departure.bus.capacity
-            available_seats = max(0, bus_capacity - reservations_count)
-            occupancy_rate = (reservations_count / bus_capacity * 100) if bus_capacity > 0 else 0
-
-            departure_info = {
-                'departure': departure,
-                'reservations_count': reservations_count,
-                'available_seats': available_seats,
-                'occupancy_rate': min(100, occupancy_rate)
-            }
-            departures_by_date[date_str].append(departure_info)
-
-        context['departures_by_date'] = departures_by_date
-        context['date_range'] = [today + timedelta(days=x) for x in range(8)]
-        context['empty'] = []  # pour éviter erreur si aucun départ
-        return context
 
     def get_queryset(self):
-        return Departure.objects.filter(date__gte=now()).order_by('date', 'time')
+        return Departure.objects.select_related('trip', 'bus').order_by('date_depart')
 
 class DepartureCreateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , CreateView):
     model = Departure
-    fields = ['trip', 'bus', 'date', 'time', 'is_active']
+    form_class = DepartureAdminForm
     template_name = 'dashboard/departure_form.html'
     active_tab_value ='departures'
-    breadcrumb_title = 'Départs > Ajouter Départs'
+    breadcrumb_title = 'Departs > Ajouter Departs'
     success_url = reverse_lazy('dashboard:departure_list')
 
 class DepartureUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , UpdateView):
     model = Departure
-    fields = ['trip', 'bus', 'date', 'time', 'is_active']
+    form_class = DepartureAdminForm
     template_name = 'dashboard/departure_form.html'
     active_tab_value ='departures'
-    breadcrumb_title = 'Départs > Modifier Départs'
+    breadcrumb_title = 'Departs > Modifier Departs'
     success_url = reverse_lazy('dashboard:departure_list')
 
 class DepartureDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , DeleteView):
     model = Departure
     template_name = 'dashboard/departure_confirm_delete.html'
     active_tab_value ='departures'
-    breadcrumb_title = 'Départs > Suppression Départs'
+    breadcrumb_title = 'Departs > Suppression Departs'
     success_url = reverse_lazy('dashboard:departure_list')
 
 # Consultation des Messages clients
@@ -194,7 +350,7 @@ class MessageReplyView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , Upda
     def form_valid(self, form):
         response = form.save(commit=False)
         response.replied_at = timezone.now()
-        # Vérification de la réponse
+        # Verification de la reponse
         if not response.reply:
             return self.form_invalid(form)
         
@@ -203,15 +359,15 @@ class MessageReplyView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , Upda
         # Envoi de l'email au client
         try:
             send_mail(
-                subject='Réponse à votre message de contact - Gareci',
+                subject='Reponse a votre message de contact - Gareci',
                 message=f"""Bonjour {response.name},
 
-Voici notre réponse à votre message du {response.submitted_at}:
+Voici notre reponse a votre message du {response.submitted_at}:
 
 {response.reply}
 
 Cordialement,
-L'équipe Gareci""",
+L'equipe Gareci""",
                 from_email=None,  # Utilise DEFAULT_FROM_EMAIL
                 recipient_list=[response.email],
                 fail_silently=False,
@@ -228,12 +384,12 @@ class MessageDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , Del
     breadcrumb_title = 'Messages > Suppression Messages'
     success_url = reverse_lazy('dashboard:message_list')
 
-# Consultation des Réservations clients
+# Consultation des Reservations clients
 class ReservationAdminListView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , ListView):
     model = Reservation
     template_name = 'dashboard/reservation_list.html'
     active_tab_value ='reservations'
-    breadcrumb_title = 'Réservations '
+    breadcrumb_title = 'Reservations '
     context_object_name = 'reservations'
     ordering = ['-booked_at']
 
@@ -242,7 +398,7 @@ class ReservationAdminUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMi
     fields = ['status']
     template_name = 'dashboard/reservation_form.html'
     active_tab_value ='reservations'
-    breadcrumb_title = 'Réservations  > Modifier Réservations '
+    breadcrumb_title = 'Reservations > Modifier Reservations'
 
     def get_success_url(self):
         return reverse_lazy('dashboard:reservation_list')
@@ -251,14 +407,14 @@ class ReservationAdminDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMi
     model = Reservation
     template_name = 'dashboard/reservation_confirm_delete.html'
     active_tab_value ='reservations'
-    breadcrumb_title = 'Réservations  > Suppression Réservations '
+    breadcrumb_title = 'Reservations > Suppression Reservations'
     success_url = reverse_lazy('dashboard:reservation_list')
 
 class ReservationAdminConfirmView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , TemplateView):
     active_tab_value ='departures'
     def post(self, request, pk, *args, **kwargs):
         reservation = get_object_or_404(Reservation, pk=pk)
-        reservation.status = 'C'
+        reservation.status = ReservationStatus.CONFIRMEE
         reservation.save()
         return redirect('dashboard:reservation_list')
 
@@ -276,55 +432,29 @@ class DashboardView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , Templat
         context['total_reservations'] = Reservation.objects.count()
         context['total_users'] = CustomUser.objects.count()
         
-        # Départs à venir (7 prochains jours) avec statistiques
-        end_date = today + timedelta(days=7)
+        # Departs a venir (sans limite de 7 jours) avec statistiques
         upcoming_departures = Departure.objects.select_related(
             'trip', 'bus'
         ).prefetch_related(
             'reservation_set'
         ).filter(
-            date__gte=today,
-            date__lte=end_date,
-        ).order_by('date', 'time')
-        
-        # Organiser les départs par date
-        departures_by_date = {}
-        for departure in upcoming_departures:
-            date_str = departure.date.strftime('%Y-%m-%d')
-            if date_str not in departures_by_date:
-                departures_by_date[date_str] = []
-            # Utiliser une seule requête pour compter les réservations actives
-            reservations_count = departure.reservation_set.all().filter(
-                status__in=['P', 'C']
-            ).count()
-            bus_capacity = departure.bus.capacity
-            available_seats = max(0, bus_capacity - reservations_count)
-            occupancy_rate = (reservations_count / bus_capacity * 100) if bus_capacity > 0 else 0
-              # Ajouter les informations enrichies
-            departure_info = {
-                'departure': departure,
-                'reservations_count': reservations_count,
-                'available_seats': available_seats,
-                'occupancy_rate': min(100, occupancy_rate)  # Plafonner à 100%
-            }
-            departures_by_date[date_str].append(departure_info)
-            
-        context['date_range'] = [today + timedelta(days=i) for i in range(7)]
-        context['departures_by_date'] = departures_by_date
+            date_depart__date__gte=today,
+        ).order_by('date_depart')
+
         context['upcoming_trips'] = upcoming_departures.count()
         
-        # Liste complète des départs pour le tableau principal
-        context['object_list'] = Departure.objects.select_related('trip', 'bus').all().order_by('-date', '-time')
-        # Réservations récentes (10 dernières)
+        # Liste complete des departs pour le tableau principal
+        context['object_list'] = Departure.objects.select_related('trip', 'bus').all().order_by('-date_depart')
+        # Reservations recentes (10 dernieres)
         recent_reservations = Reservation.objects.select_related(
             'user',
             'departure__trip',
             'departure__bus'
         ).filter(
-            status__in=['P', 'C']  # Uniquement les réservations actives
+            status__in=[ReservationStatus.EN_ATTENTE_VALIDATION, ReservationStatus.VALIDEE, ReservationStatus.CONFIRMEE]  # Uniquement les reservations actives
         ).order_by('-booked_at')[:10]
         context['recent_reservations'] = recent_reservations
-        # Messages récents (5 derniers sans réponse)
+        # Messages recents (5 derniers sans reponse)
         recent_messages = ContactMessage.objects.filter(
             replied_at__isnull=True
         ).order_by('-submitted_at')[:5]

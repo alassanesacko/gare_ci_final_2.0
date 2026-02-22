@@ -1,25 +1,48 @@
 from django.contrib import admin
-from .models import Trip, Bus, Category, Departure
+from .models import Trip, Bus, Category, Departure, Ville, Arret, Segment, EtapeTrajet
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name',)
+    list_display = ('nom', 'niveau', 'prix_multiplicateur')
+    search_fields = ('nom',)
 
 @admin.register(Bus)
 class BusAdmin(admin.ModelAdmin):
-    list_display = ('name', 'capacity')
-    search_fields = ('name',)
-    list_filter = ('capacity',)
+    list_display = ('immatriculation', 'modele', 'capacite', 'en_service')
+    search_fields = ('immatriculation', 'modele')
+    list_filter = ('en_service', 'categorie')
+
+@admin.register(Ville)
+class VilleAdmin(admin.ModelAdmin):
+    list_display = ('nom', 'code')
+    search_fields = ('nom', 'code')
+
+@admin.register(Arret)
+class ArretAdmin(admin.ModelAdmin):
+    list_display = ('nom', 'ville', 'adresse')
+    search_fields = ('nom', 'ville__nom')
+    list_filter = ('ville',)
+
+@admin.register(Segment)
+class SegmentAdmin(admin.ModelAdmin):
+    list_display = ('arret_depart', 'arret_arrivee', 'distance_km', 'duree_minutes')
+    search_fields = ('arret_depart__nom', 'arret_arrivee__nom')
+    list_filter = ('distance_km', 'duree_minutes')
+
+@admin.register(EtapeTrajet)
+class EtapeTrajetAdmin(admin.ModelAdmin):
+    list_display = ('trip', 'segment', 'ordre')
+    search_fields = ('trip__nom', 'segment__arret_depart__nom')
+    list_filter = ('ordre',)
 
 @admin.register(Trip)
 class TripAdmin(admin.ModelAdmin):
-    list_display = ('origin', 'destination', 'category', 'price')
-    search_fields = ('origin', 'destination')
-    list_filter = ('category', 'price')
+    list_display = ('nom', 'ville_depart', 'ville_arrivee', 'price', 'actif')
+    search_fields = ('nom', 'ville_depart__nom', 'ville_arrivee__nom')
+    list_filter = ('ville_depart', 'ville_arrivee', 'actif')
 
 @admin.register(Departure)
 class DepartureAdmin(admin.ModelAdmin):
-    list_display = ('trip', 'bus', 'date', 'time', 'is_active')
-    search_fields = ('trip__origin', 'trip__destination')
-    list_filter = ('date', 'is_active')
+    list_display = ('trip', 'bus', 'date_depart', 'date_arrivee_estimee', 'places_disponibles', 'actif')
+    search_fields = ('trip__nom', 'bus__immatriculation')
+    list_filter = ('date_depart', 'actif')

@@ -1,10 +1,12 @@
-
 import os
 from pathlib import Path
+
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = os.getenv
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -27,10 +29,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts',        # Authentification personnalisée
-    'trips',           # Gestion des trajets et départs
-    'reservations',    # Gestion des réservations et messages
-    'gareci_admin',    # Dashboard admin personnalisé
+    'accounts',
+    'trips',
+    'reservations',
+    'gareci_admin',
 ]
 
 MIDDLEWARE = [
@@ -48,7 +50,7 @@ ROOT_URLCONF = 'gareci_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Répertoire des templates
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -110,16 +112,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']  # Répertoire static à la racine du projet
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-AUTH_USER_MODEL = 'accounts.CustomUser'   # pointe vers notre modèle hérité d'AbstractUser :contentReference[oaicite:0]{index=0}
-# Authentification/Redirection (après login, mais nous redirigeons dynamiquement)
-LOGIN_REDIRECT_URL = '/'     # Redirect par défaut (sera surchargé dans la vue)
+AUTH_USER_MODEL = 'accounts.CustomUser'
+LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Email configuration pour développement
@@ -129,9 +130,22 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 # Configuration Gmail
-EMAIL_HOST_USER = 'sackoalassane28@gmail.com'  
-EMAIL_HOST_PASSWORD = 'igha fzmt furi pkxb'  # Votre mot de passe d'application
+EMAIL_HOST_USER = 'sackoalassane28@gmail.com'
+EMAIL_HOST_PASSWORD = 'igha fzmt furi pkxb'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Celery
+CELERY_BROKER_URL = env('REDIS_URL')
+CELERY_BEAT_SCHEDULE = {
+    'expirer-reservations': {
+        'task': 'reservations.tasks.expirer_reservations',
+        'schedule': crontab(minute='*/5'),
+    },
+    'envoyer-rappels-voyage': {
+        'task': 'reservations.tasks.envoyer_rappels_voyage',
+        'schedule': crontab(hour=18, minute=0),
+    },
+}
 
 # Si les emails ne fonctionnent pas, utilisez le backend console pour voir les emails dans la console
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

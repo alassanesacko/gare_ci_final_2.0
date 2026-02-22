@@ -1,0 +1,27 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Villes{% endblock %}
+{% block content %}
+<div class="trips-container">
+    <div class="trips-header">
+        <h2><i class="fas fa-city"></i> Villes</h2>
+        <a href="{% url 'dashboard:ville_add' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter une ville</a>
+    </div>
+    <table class="trips-table">
+        <thead><tr><th>Nom</th><th>Code</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for ville in object_list %}
+            <tr>
+                <td>{{ ville.nom }}</td>
+                <td>{{ ville.code }}</td>
+                <td>
+                    <a href="{% url 'dashboard:ville_edit' ville.pk %}" class="btn btn-sm btn-warning">Modifier</a>
+                    <a href="{% url 'dashboard:ville_delete' ville.pk %}" class="btn btn-sm btn-danger">Supprimer</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3">Aucune ville.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

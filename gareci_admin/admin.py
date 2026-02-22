@@ -4,9 +4,9 @@ from .models import Conducteur, Gare
 
 @admin.register(Conducteur)
 class ConducteurAdmin(admin.ModelAdmin):
-	list_display = ('prenom', 'nom', 'email', 'contact', 'actif', 'date_embauche', 'bus')
-	list_filter = ('actif',)
-	search_fields = ('nom', 'prenom', 'email', 'contact')
+	list_display = ('prenom', 'nom', 'email', 'telephone', 'statut', 'date_embauche')
+	list_filter = ('statut', 'type_permis')
+	search_fields = ('nom', 'prenom', 'email', 'telephone', 'cin')
 
 
 @admin.register(Gare)

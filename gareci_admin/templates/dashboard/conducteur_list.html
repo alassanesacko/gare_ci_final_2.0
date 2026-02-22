@@ -1,0 +1,56 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Liste des conducteurs{% endblock %}
+{% block content %}
+
+<div class="conducteurs-container">
+    <div class="conducteurs-header">
+        <h2><i class="fas fa-user-tie"></i> Liste des conducteurs</h2>
+        <a href="{% url 'dashboard:conducteur_add' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Ajouter un conducteur
+        </a>
+    </div>
+
+    <table class="conducteurs-table">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>CIN</th>
+                <th>Téléphone</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for conducteur in object_list %}
+            <tr>
+                <td>{{ conducteur.nom }}</td>
+                <td>{{ conducteur.prenom }}</td>
+                <td>{{ conducteur.cin }}</td>
+                <td>{{ conducteur.telephone }}</td>
+                <td>{{ conducteur.get_statut_display }}</td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="{% url 'dashboard:conducteur_edit' conducteur.pk %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                        <a href="{% url 'dashboard:conducteur_delete' conducteur.pk %}" 
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Voulez-vous vraiment supprimer ce conducteur ?');">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="empty-state">
+                    <i class="fas fa-user-tie"></i>
+                    <p>Aucun conducteur enregistré</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Paiement échoué{% endblock %}
+{% block content %}
+<div class="panel error">
+  <h2>✘ Paiement échoué</h2>
+  <p>Le paiement a échoué. Vous pouvez réessayer.</p>
+  <p>
+    <a href="{% url 'reservations:paiement' reservation.id %}" class="btn btn-primary">Réessayer le paiement</a>
+  </p>
+  <p><a href="{% url 'reservations:list' %}">Mes réservations</a></p>
+</div>
+{% endblock %}

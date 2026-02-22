@@ -1,0 +1,13 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Supprimer un arret{% endblock %}
+{% block content %}
+<div class="trip-form-container">
+    <h2>Supprimer l'arret</h2>
+    <p>Confirmer la suppression de {{ object.nom }} ?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Supprimer</button>
+        <a href="{% url 'dashboard:arret_list' %}" class="btn btn-secondary">Annuler</a>
+    </form>
+</div>
+{% endblock %}

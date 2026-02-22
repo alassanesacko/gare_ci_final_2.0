@@ -1,0 +1,19 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}{% if form.instance.pk %}Modifier{% else %}Ajouter{% endif %} une ville{% endblock %}
+{% block content %}
+<div class="trip-form-container">
+    <h2>{% if form.instance.pk %}Modifier{% else %}Ajouter{% endif %} une ville</h2>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.errors %}<div class="errorlist">{{ field.errors }}</div>{% endif %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a href="{% url 'dashboard:ville_list' %}" class="btn btn-secondary">Retour</a>
+    </form>
+</div>
+{% endblock %}

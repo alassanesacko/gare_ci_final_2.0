@@ -1,0 +1,28 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Arrets{% endblock %}
+{% block content %}
+<div class="trips-container">
+    <div class="trips-header">
+        <h2><i class="fas fa-map-marker-alt"></i> Arrets</h2>
+        <a href="{% url 'dashboard:arret_add' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter un arret</a>
+    </div>
+    <table class="trips-table">
+        <thead><tr><th>Nom</th><th>Ville</th><th>Adresse</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for arret in object_list %}
+            <tr>
+                <td>{{ arret.nom }}</td>
+                <td>{{ arret.ville.nom }}</td>
+                <td>{{ arret.adresse }}</td>
+                <td>
+                    <a href="{% url 'dashboard:arret_edit' arret.pk %}" class="btn btn-sm btn-warning">Modifier</a>
+                    <a href="{% url 'dashboard:arret_delete' arret.pk %}" class="btn btn-sm btn-danger">Supprimer</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">Aucun arret.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

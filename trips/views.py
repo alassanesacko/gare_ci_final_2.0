@@ -19,8 +19,8 @@ def home(request):
         if contact_form.is_valid():
             contact_form.save()
             return redirect('trips:home')
-    # Liste des départs actifs (is_active = True)
-    departures = Departure.objects.filter(is_active=True)
+    # Liste des départs actifs
+    departures = Departure.objects.filter(actif=True)
     return render(request, 'home.html', {
         'search_form': search_form,
         'contact_form': contact_form,
@@ -37,15 +37,16 @@ def search_results(request):
     origin = request.GET.get('origin', '').strip()
     destination = request.GET.get('destination', '').strip()
     date = request.GET.get('date', '').strip()
-    results = Departure.objects.filter(is_active=True)
+    results = Departure.objects.filter(actif=True)
     if origin and destination:
         results = results.filter(
-            Q(trip__origin__icontains=origin) & Q(trip__destination__icontains=destination)
+            Q(trip__ville_depart__nom__icontains=origin)
+            & Q(trip__ville_arrivee__nom__icontains=destination)
         )
     elif origin:
-        results = results.filter(trip__origin__icontains=origin)
+        results = results.filter(trip__ville_depart__nom__icontains=origin)
     elif destination:
-        results = results.filter(trip__destination__icontains=destination)
+        results = results.filter(trip__ville_arrivee__nom__icontains=destination)
     if date:
-        results = results.filter(date=date)
+        results = results.filter(date_depart__date=date)
     return render(request, 'trips/search_results.html', {'results': results})

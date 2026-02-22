@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Paiement réussi{% endblock %}
+{% block content %}
+<div class="panel success">
+  <h2>✔ Paiement réussi</h2>
+  <p>Votre paiement a été accepté.</p>
+  {% if request.user and request.user.is_authenticated %}
+    <p>Référence de réservation : <strong>{{ request.GET.ref|default:'' }}</strong></p>
+  {% endif %}
+  <p>Référence de paiement : <strong>{{ request.GET.pay_ref|default:'' }}</strong></p>
+  <p><a href="{% url 'reservations:download_ticket' request.GET.res_id %}">Télécharger le billet PDF</a></p>
+  <p><a href="{% url 'reservations:list' %}">Mes réservations</a></p>
+</div>
+{% endblock %}

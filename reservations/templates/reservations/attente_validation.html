@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Réservation en attente{% endblock %}
+{% block content %}
+<div class="panel">
+  <h2>Votre réservation est en attente de validation</h2>
+  <p>Référence : <strong>{{ reservation.reference }}</strong></p>
+  <p>Notre équipe vérifie votre réservation. Vous recevrez une réponse sous 24h.</p>
+  <p><a href="{% url 'reservations:list' %}">Mes réservations</a></p>
+</div>
+{% endblock %}

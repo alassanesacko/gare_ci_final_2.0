@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="{% static 'css/gareci_admin/category_form.css' %}">
     <link rel="stylesheet" href="{% static 'css/gareci_admin/bus_list.css' %}">
     <link rel="stylesheet" href="{% static 'css/gareci_admin/bus_form.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gareci_admin/searchable_select.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -98,6 +99,21 @@
                         </ul>
                     </li>
                     
+                    <li class="{% if active_tab == 'villes' %}active{% endif %}">
+                        <a href="{% url 'dashboard:ville_list' %}">
+                            <i class="fas fa-city"></i> Villes
+                        </a>
+                    </li>
+                    <li class="{% if active_tab == 'arrets' %}active{% endif %}">
+                        <a href="{% url 'dashboard:arret_list' %}">
+                            <i class="fas fa-map-marker-alt"></i> Arrets
+                        </a>
+                    </li>
+                    <li class="{% if active_tab == 'segments' %}active{% endif %}">
+                        <a href="{% url 'dashboard:segment_list' %}">
+                            <i class="fas fa-road"></i> Segments
+                        </a>
+                    </li>
                     <!-- Section Communication -->
                     <li class="nav-section-header">
                         <span><i class="fas fa-comments"></i> Communication</span>
@@ -246,6 +262,157 @@
             });
         });
     </script>
+    <script>
+        (function () {
+            function enhanceSelect(select) {
+                if (!select || select.dataset.searchEnhanced === "1" || select.multiple) {
+                    return;
+                }
+
+                const options = Array.from(select.options).map(function (opt) {
+                    return {
+                        value: opt.value,
+                        label: (opt.textContent || "").trim(),
+                    };
+                });
+
+                const wrapper = document.createElement("div");
+                wrapper.className = "searchable-select";
+
+                const input = document.createElement("input");
+                input.type = "text";
+                input.className = "searchable-select-input";
+                input.autocomplete = "off";
+
+                const selectedOption = select.options[select.selectedIndex];
+                input.value = selectedOption && selectedOption.value !== ""
+                    ? selectedOption.textContent.trim()
+                    : "";
+                input.placeholder = select.dataset.searchPlaceholder || "Rechercher...";
+
+                const list = document.createElement("div");
+                list.className = "searchable-select-list";
+
+                let highlightedIndex = -1;
+                let visibleOptions = [];
+
+                function closeList() {
+                    list.style.display = "none";
+                    highlightedIndex = -1;
+                }
+
+                function openList() {
+                    list.style.display = "block";
+                }
+
+                function pickOption(option) {
+                    select.value = option.value;
+                    input.value = option.label;
+                    select.dispatchEvent(new Event("change", { bubbles: true }));
+                    closeList();
+                }
+
+                function renderList(query) {
+                    const normalized = (query || "").toLowerCase();
+                    visibleOptions = options.filter(function (opt) {
+                        if (opt.value === "") {
+                            return false;
+                        }
+                        return !normalized || opt.label.toLowerCase().includes(normalized);
+                    });
+
+                    list.innerHTML = "";
+                    if (visibleOptions.length === 0) {
+                        const empty = document.createElement("div");
+                        empty.className = "searchable-select-empty";
+                        empty.textContent = "Aucun resultat";
+                        list.appendChild(empty);
+                        openList();
+                        return;
+                    }
+
+                    visibleOptions.forEach(function (opt, idx) {
+                        const item = document.createElement("button");
+                        item.type = "button";
+                        item.className = "searchable-select-item";
+                        item.textContent = opt.label;
+                        item.addEventListener("mousedown", function (event) {
+                            event.preventDefault();
+                            pickOption(opt);
+                        });
+                        if (idx === highlightedIndex) {
+                            item.classList.add("is-active");
+                        }
+                        list.appendChild(item);
+                    });
+
+                    openList();
+                }
+
+                input.addEventListener("focus", function () {
+                    renderList(input.value);
+                });
+
+                input.addEventListener("input", function () {
+                    highlightedIndex = -1;
+                    renderList(input.value);
+                    if (!input.value.trim()) {
+                        select.value = "";
+                    }
+                });
+
+                input.addEventListener("keydown", function (event) {
+                    if (list.style.display !== "block") {
+                        return;
+                    }
+
+                    if (event.key === "ArrowDown") {
+                        event.preventDefault();
+                        highlightedIndex = Math.min(highlightedIndex + 1, visibleOptions.length - 1);
+                        renderList(input.value);
+                    } else if (event.key === "ArrowUp") {
+                        event.preventDefault();
+                        highlightedIndex = Math.max(highlightedIndex - 1, 0);
+                        renderList(input.value);
+                    } else if (event.key === "Enter") {
+                        if (highlightedIndex >= 0 && visibleOptions[highlightedIndex]) {
+                            event.preventDefault();
+                            pickOption(visibleOptions[highlightedIndex]);
+                        }
+                    } else if (event.key === "Escape") {
+                        closeList();
+                    }
+                });
+
+                input.addEventListener("blur", function () {
+                    window.setTimeout(closeList, 120);
+                });
+
+                select.addEventListener("change", function () {
+                    const current = select.options[select.selectedIndex];
+                    input.value = current ? current.textContent.trim() : "";
+                });
+
+                select.style.display = "none";
+                select.dataset.searchEnhanced = "1";
+
+                wrapper.appendChild(input);
+                wrapper.appendChild(list);
+                select.parentNode.insertBefore(wrapper, select.nextSibling);
+            }
+
+            window.initSearchableSelects = function (rootElement) {
+                const root = rootElement || document;
+                const selects = root.querySelectorAll("form select");
+                selects.forEach(enhanceSelect);
+            };
+
+            document.addEventListener("DOMContentLoaded", function () {
+                window.initSearchableSelects(document);
+            });
+        })();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
+

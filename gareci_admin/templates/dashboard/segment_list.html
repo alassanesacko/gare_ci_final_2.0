@@ -1,0 +1,29 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Segments{% endblock %}
+{% block content %}
+<div class="trips-container">
+    <div class="trips-header">
+        <h2><i class="fas fa-road"></i> Segments</h2>
+        <a href="{% url 'dashboard:segment_add' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter un segment</a>
+    </div>
+    <table class="trips-table">
+        <thead><tr><th>Depart</th><th>Arrivee</th><th>Distance</th><th>Duree (min)</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for segment in object_list %}
+            <tr>
+                <td>{{ segment.arret_depart }}</td>
+                <td>{{ segment.arret_arrivee }}</td>
+                <td>{{ segment.distance_km }}</td>
+                <td>{{ segment.duree_minutes }}</td>
+                <td>
+                    <a href="{% url 'dashboard:segment_edit' segment.pk %}" class="btn btn-sm btn-warning">Modifier</a>
+                    <a href="{% url 'dashboard:segment_delete' segment.pk %}" class="btn btn-sm btn-danger">Supprimer</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">Aucun segment.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

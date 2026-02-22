@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Paiement - {{ reservation.reference|default:reservation.id }}{% endblock %}
+{% block content %}
+<h2>Paiement de la réservation</h2>
+<div class="panel">
+  <h3>Récapitulatif</h3>
+  <p><strong>Trajet :</strong> {{ reservation.departure.trip.ville_depart.nom }} → {{ reservation.departure.trip.ville_arrivee.nom }}</p>
+  <p><strong>Date & heure :</strong> {{ reservation.departure.date_depart|date:"d/m/Y H:i" }}</p>
+  <p><strong>Nombre de places :</strong> {{ reservation.nombre_places }}</p>
+  <p><strong>Prix total :</strong> {{ reservation.prix_total }} FCFA</p>
+  <p><strong>Référence :</strong> {{ reservation.reference }}</p>
+</div>
+
+<div class="panel">
+  <h3>Simulation de paiement</h3>
+  <p>Cette page simule un flux de paiement pour les tests. Choisissez une action :</p>
+  <form method="post" action="{% url 'reservations:traiter_paiement' reservation.id %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" id="action" value="">
+    <button type="button" class="btn btn-success" onclick="document.getElementById('action').value='payer'; this.form.submit();">✔ Simuler un paiement réussi</button>
+    <button type="button" class="btn btn-danger" onclick="document.getElementById('action').value='echouer'; this.form.submit();">✘ Simuler un échec de paiement</button>
+  </form>
+
+  <p style="margin-top:12px; color:#666">Temps restant pour payer : <span id="countdown"></span></p>
+</div>
+
+<script>
+// Countdown to reservation.expires_at
+(function(){
+  var expires = new Date("{{ reservation.expires_at|date:'c' }}");
+  var countdownEl = document.getElementById('countdown');
+  function update(){
+    var now = new Date();
+    var diff = Math.floor((expires - now)/1000);
+    if(diff<=0){
+      window.location.href = "{% url 'reservations:paiement_echec' %}";
+      return;
+    }
+    var h = Math.floor(diff/3600); diff%=3600;
+    var m = Math.floor(diff/60); var s = diff%60;
+    countdownEl.textContent = (h>0? (h+':') : '') + (m<10? '0'+m : m) + ':' + (s<10? '0'+s : s);
+  }
+  update();
+  setInterval(update,1000);
+})();
+</script>
+
+{% endblock %}
