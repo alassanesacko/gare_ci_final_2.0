@@ -1,69 +1,110 @@
 {% extends 'base.html' %}
-{% block title %}Résultats de recherche - GareCI{% endblock %}
+{% block title %}Resultats de recherche - GareCI{% endblock %}
 
 {% block content %}
 <div class="search-results-container">
     <div class="search-header">
-        <h1><i class="fas fa-search"></i> Résultats de recherche</h1>
-        <p class="subtitle">Trajets disponibles pour votre voyage</p>
+        <h1><i class="fas fa-search"></i> Resultats de recherche</h1>
+        {% if date_recherche %}
+        <p class="subtitle">{{ nb_resultats }} depart(s) disponible(s) pour le {{ date_recherche|date:"d/m/Y" }}</p>
+        {% else %}
+        <p class="subtitle">Selectionnez une date pour afficher les departs disponibles.</p>
+        {% endif %}
+        <a href="{% url 'trips:home' %}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Retour a l'accueil
+        </a>
     </div>
 
-    {% if results %}
-    <div class="results-table-container">
-        <table class="results-table">
-            <thead>
-                <tr>
-                    <th>Trajet</th>
-                    <th>Date</th>
-                    <th>Heure</th>
-                    <th>Bus</th>
-                    <th>Prix</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for departure in results %}
-                <tr class="result-row">
-                    <td data-label="Trajet">
-                        <div class="trip-info">
-                            <span class="origin">{{ departure.trip.origin }}</span>
-                            <i class="fas fa-arrow-right"></i>
-                            <span class="destination">{{ departure.trip.destination }}</span>
-                        </div>
-                    </td>
-                    <td data-label="Date">{{ departure.date|date:"d/m/Y" }}</td>
-                    <td data-label="Heure">{{ departure.time|time:'H:i' }}</td>
-                    <td data-label="Bus">
-                        <div class="bus-info">
-                            <i class="fas fa-bus"></i> {{ departure.bus }}
-                        </div>
-                    </td>
-                    <td data-label="Prix">{{ departure.trip.price }} FCFA</td>
-                    <td data-label="Actions">
-                        <a href="{% url 'reservations:reserve' departure.id %}" class="btn-reserve">
-                            <i class="fas fa-ticket-alt"></i> Réserver
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    {% if resultats %}
+    <div class="departures-cards">
+        {% for item in resultats %}
+        <article class="departure-card">
+            <div class="departure-top">
+                <div class="times">
+                    <strong>{{ item.depart.heure_depart|time:"H:i" }}</strong>
+                    <span>-</span>
+                    <strong>{{ item.depart.heure_arrivee|time:"H:i" }}</strong>
+                </div>
+                <div class="route">
+                    {{ item.depart.trip.arret_depart.ville.nom }} -> {{ item.depart.trip.arret_arrivee.ville.nom }}
+                </div>
+            </div>
+
+            <div class="departure-badges">
+                {% if item.depart.trip.est_direct %}
+                <span class="badge badge-direct">Direct</span>
+                {% else %}
+                <span class="badge badge-escale">{{ item.depart.trip.etapetrajet_set.count|add:"-1" }} escale(s)</span>
+                {% endif %}
+            </div>
+
+            <div class="departure-details">
+                <div class="category">
+                    <strong>{{ item.depart.bus.categorie.nom|default:"Categorie non renseignee" }}</strong>
+                </div>
+                <div class="equipments">
+                    {% if item.depart.bus.categorie and item.depart.bus.categorie.a_wifi %}<span><i class="fas fa-wifi"></i> Wifi</span>{% endif %}
+                    {% if item.depart.bus.categorie and item.depart.bus.categorie.a_climatisation %}<span><i class="fas fa-fan"></i> Clim</span>{% endif %}
+                    {% if item.depart.bus.categorie and item.depart.bus.categorie.a_prise_usb %}<span><i class="fas fa-plug"></i> USB</span>{% endif %}
+                    {% if item.depart.bus.categorie and item.depart.bus.categorie.a_wc %}<span><i class="fas fa-restroom"></i> WC</span>{% endif %}
+                    {% if item.depart.bus.categorie and item.depart.bus.categorie.a_repas %}<span><i class="fas fa-utensils"></i> Repas</span>{% endif %}
+                </div>
+                <div class="availability {% if item.places < 5 %}low{% else %}ok{% endif %}">
+                    {{ item.places }} place(s) disponible(s)
+                </div>
+            </div>
+
+            <div class="departure-bottom">
+                <div class="price">{{ item.depart.prix }} FCFA</div>
+                {% if user.is_authenticated %}
+                <a href="{% url 'reservations:reserve' item.depart.id date_str %}" class="btn-reserve">
+                    <i class="fas fa-ticket-alt"></i> Reserver
+                </a>
+                {% else %}
+                <a href="{% url 'accounts:login' %}?next={% url 'reservations:reserve' item.depart.id date_str %}" class="btn-reserve">
+                    <i class="fas fa-sign-in-alt"></i> Reserver
+                </a>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
     </div>
-    {% else %}
+    {% elif date_recherche %}
     <div class="no-results">
         <i class="fas fa-exclamation-circle"></i>
-        <h3>Aucun trajet disponible</h3>
-        <p>Nous n'avons trouvé aucun trajet correspondant à votre recherche.</p>
-        <a href="{% url 'trips:home' %}" class="btn btn-primary">
-            <i class="fas fa-search"></i> Nouvelle recherche
-        </a>
+        <h3>Aucun depart disponible pour cette date.</h3>
     </div>
     {% endif %}
 
-    <div class="search-footer">
-        <a href="{% url 'trips:home' %}" class="btn-back">
-            <i class="fas fa-arrow-left"></i> Retour à l'accueil
-        </a>
-    </div>
+    <section class="search-edit-section">
+        <h3>Modifier ma recherche</h3>
+        <form method="get" action="{% url 'trips:search_results' %}" class="client-search-form">
+            <div class="search-field">
+                <label for="ville_depart">Ville depart</label>
+                <input id="ville_depart" type="text" name="ville_depart" list="villes-depart-list" value="{{ ville_depart_query }}" placeholder="Ex: Abidjan">
+            </div>
+
+            <div class="search-field">
+                <label for="ville_arrivee">Ville arrivee</label>
+                <input id="ville_arrivee" type="text" name="ville_arrivee" list="villes-arrivee-list" value="{{ ville_arrivee_query }}" placeholder="Ex: Bouake">
+            </div>
+
+            <div class="search-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Rechercher
+                </button>
+            </div>
+        </form>
+        <datalist id="villes-depart-list">
+            {% for ville in villes %}
+            <option value="{{ ville.nom }}"></option>
+            {% endfor %}
+        </datalist>
+        <datalist id="villes-arrivee-list">
+            {% for ville in villes %}
+            <option value="{{ ville.nom }}"></option>
+            {% endfor %}
+        </datalist>
+    </section>
 </div>
 {% endblock %}
