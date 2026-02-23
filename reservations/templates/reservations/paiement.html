@@ -4,8 +4,8 @@
 <h2>Paiement de la réservation</h2>
 <div class="panel">
   <h3>Récapitulatif</h3>
-  <p><strong>Trajet :</strong> {{ reservation.departure.trip.ville_depart.nom }} → {{ reservation.departure.trip.ville_arrivee.nom }}</p>
-  <p><strong>Date & heure :</strong> {{ reservation.departure.date_depart|date:"d/m/Y H:i" }}</p>
+  <p><strong>Trajet :</strong> {{ reservation.trip.ville_depart.nom }} → {{ reservation.trip.ville_arrivee.nom }}</p>
+  <p><strong>Date & heure :</strong> {{ reservation.date_voyage|date:"d/m/Y" }} {{ reservation.heure_depart|time:"H:i" }}</p>
   <p><strong>Nombre de places :</strong> {{ reservation.nombre_places }}</p>
   <p><strong>Prix total :</strong> {{ reservation.prix_total }} FCFA</p>
   <p><strong>Référence :</strong> {{ reservation.reference }}</p>

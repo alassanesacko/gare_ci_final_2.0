@@ -1,0 +1,176 @@
+.client-hero {
+    margin-top: 22px;
+}
+
+.client-hero-inner {
+    border-radius: 16px;
+    background: #ffffff;
+    color: #1f2937;
+    padding: 28px;
+    border: 1px solid #ffe1cc;
+    box-shadow: 0 12px 26px rgba(255, 107, 0, 0.14);
+}
+
+.client-hero-copy h1 {
+    margin: 0;
+    font-size: 2rem;
+    line-height: 1.2;
+}
+
+.client-hero-copy p {
+    margin: 10px 0 18px;
+    max-width: 720px;
+    color: #4b5563;
+}
+
+.client-search-form {
+    display: grid;
+    grid-template-columns: 1.1fr 1.1fr 0.9fr auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.search-field label {
+    display: block;
+    font-size: 0.86rem;
+    margin-bottom: 6px;
+}
+
+.search-field select,
+.search-field input {
+    width: 100%;
+    height: 44px;
+    border-radius: 8px;
+    border: 1px solid #ffd3b3;
+    background: #fff9f5;
+    color: #1f2937;
+    padding: 0 12px;
+}
+
+.search-field select option {
+    color: #1f2937;
+}
+
+.search-field input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: none;
+}
+
+.search-actions .btn {
+    height: 44px;
+    width: 100%;
+}
+
+.advantages {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.adv-card {
+    background: #fff;
+    border: 1px solid #ececec;
+    border-radius: 12px;
+    padding: 18px;
+}
+
+.adv-card i {
+    font-size: 1.3rem;
+    color: #ff6b00;
+}
+
+.adv-card h2 {
+    margin: 10px 0 8px;
+    font-size: 1.05rem;
+}
+
+.adv-card p {
+    margin: 0;
+    color: #4b5563;
+    line-height: 1.5;
+}
+
+.popular-destinations {
+    margin: 26px 0;
+}
+
+.section-head h2 {
+    margin: 0;
+}
+
+.section-head p {
+    margin: 6px 0 0;
+    color: #6b7280;
+}
+
+.popular-grid {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.destination-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: #fff;
+    border: 1px solid #ececec;
+    border-radius: 12px;
+    padding: 16px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.destination-card:hover {
+    transform: translateY(-2px);
+    border-color: #ff6b00;
+    box-shadow: 0 8px 20px rgba(255, 107, 0, 0.16);
+}
+
+.destination-card .route {
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.destination-card .meta {
+    color: #4b5563;
+}
+
+.destination-card .meta strong {
+    display: block;
+    margin-top: 4px;
+    color: #111827;
+}
+
+.no-data {
+    padding: 12px;
+    border: 1px dashed #d1d5db;
+    border-radius: 10px;
+    color: #6b7280;
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 980px) {
+    .client-search-form {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .advantages,
+    .popular-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .client-hero-inner {
+        padding: 18px;
+    }
+
+    .client-hero-copy h1 {
+        font-size: 1.5rem;
+    }
+
+    .client-search-form {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,112 +1,114 @@
+from datetime import datetime, timedelta
 from decimal import Decimal
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
-from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
-from django.shortcuts import get_object_or_404
-from django.conf import settings
 
-from trips.models import Departure
-from .models import Reservation, ReservationStatus, Ticket
 from gareci_admin.models import PolitiqueReservation
+from trips.models import Depart
+
+from .models import Reservation, ReservationStatus, Ticket
 
 
 class ReservationService:
-    @classmethod
-    def creer(cls, departure_id, utilisateur, nombre_places):
-        """Crée une réservation en respectant la politique.
-
-        Lève ValueError en cas d'invalidation.
-        """
+    @staticmethod
+    @transaction.atomic
+    def creer(depart_id, date_voyage, utilisateur, nombre_places):
         politique = PolitiqueReservation.get_active()
+        depart = Depart.objects.select_for_update().get(id=depart_id)
+        maintenant = timezone.now()
+        datetime_depart = timezone.make_aware(datetime.combine(date_voyage, depart.heure_depart))
 
-        with transaction.atomic():
-            # Verrouiller le départ
-            departure = (
-                Departure.objects.select_for_update()
-                .select_related('trip', 'bus', 'trip__ville_depart', 'trip__ville_arrivee')
-                .get(id=departure_id)
+        if not depart.actif:
+            raise ValidationError("Ce depart n'est plus disponible.")
+        if datetime_depart <= maintenant:
+            raise ValidationError("Impossible de reserver un depart passe.")
+
+        jours_avant = (date_voyage - maintenant.date()).days
+        if jours_avant > politique.delai_max_avant_depart:
+            date_ouverture = date_voyage - timedelta(days=politique.delai_max_avant_depart)
+            raise ValidationError(
+                f"Les reservations pour ce depart ouvrent le {date_ouverture.strftime('%d/%m/%Y')}."
             )
 
-            now = timezone.now()
-            delta = departure.date_depart - now
-
-            # Vérifier délai max (pas trop tôt)
-            max_days = politique.delai_max_avant_depart
-            if delta.days > max_days:
-                raise ValueError(f"Réservation trop anticipée. Maximum {max_days} jours avant le départ.")
-
-            # Vérifier délai min (pas trop tard)
-            min_hours = politique.delai_min_avant_depart
-            if delta.total_seconds() < min_hours * 3600:
-                raise ValueError(f"Réservation trop proche du départ. Minimum {min_hours} heures avant le départ.")
-
-            # Vérifier places_max_par_reservation
-            if nombre_places < 1 or nombre_places > politique.places_max_par_reservation:
-                raise ValueError(f"Le nombre de places doit être entre 1 et {politique.places_max_par_reservation}.")
-
-            # Vérifier reservations_max_par_client
-            active_statuses = [ReservationStatus.EN_ATTENTE_VALIDATION, ReservationStatus.VALIDEE, ReservationStatus.CONFIRMEE]
-            existing_count = Reservation.objects.filter(user=utilisateur, status__in=[s.value for s in active_statuses]).count()
-            if existing_count >= politique.reservations_max_par_client:
-                raise ValueError("Nombre maximum de réservations atteintes pour ce client.")
-
-            # Vérifier places disponibles
-            if departure.places_disponibles < nombre_places:
-                raise ValueError("Pas assez de places disponibles pour ce départ.")
-
-            # Calculer prix total: trip.price * nombre_places * category multiplier (si disponible)
-            trip = departure.trip
-            base_price = Decimal(getattr(trip, 'price', 0) or 0)
-            multiplier = Decimal(1)
-            if getattr(departure.bus, 'categorie', None) and getattr(departure.bus.categorie, 'prix_multiplicateur', None) is not None:
-                multiplier = Decimal(departure.bus.categorie.prix_multiplicateur)
-            prix_total = (base_price * Decimal(nombre_places) * multiplier).quantize(Decimal('0.01'))
-
-            # Créer un Ticket associé (pour compatibilité du modèle)
-            ticket = Ticket.objects.create(
-                bus=departure.bus,
-                user=utilisateur,
-                num_seiges=nombre_places,
-                prix=prix_total,
+        heures_avant = (datetime_depart - maintenant).total_seconds() / 3600
+        if heures_avant < politique.delai_min_avant_depart:
+            raise ValidationError(
+                f"Les reservations sont fermees {politique.delai_min_avant_depart}h avant le depart."
             )
 
-            # Créer la réservation en attente
-            reservation = Reservation.objects.create(
-                user=utilisateur,
-                departure=departure,
-                ticket=ticket,
-                status=ReservationStatus.EN_ATTENTE_VALIDATION,
-                nombre_places=nombre_places,
-                prix_total=prix_total,
-                expires_at=now + timezone.timedelta(minutes=politique.delai_paiement_minutes),
+        if nombre_places > politique.places_max_par_reservation:
+            raise ValidationError(f"Maximum {politique.places_max_par_reservation} places par reservation.")
+
+        active_statuses = [
+            ReservationStatus.EN_ATTENTE_VALIDATION,
+            ReservationStatus.VALIDEE,
+            ReservationStatus.CONFIRMEE,
+        ]
+        reservations_actives = Reservation.objects.filter(
+            user=utilisateur,
+            status__in=[s.value for s in active_statuses],
+        ).count()
+        if reservations_actives >= politique.reservations_max_par_client:
+            raise ValidationError(
+                f"Vous avez deja {politique.reservations_max_par_client} reservations actives."
             )
 
-            # Bloquer les places (décrémenter)
-            departure.places_disponibles = departure.places_disponibles - nombre_places
-            departure.save()
+        places_dispo = depart.places_disponibles_pour(date_voyage)
+        if places_dispo < nombre_places:
+            raise ValidationError(
+                f"Seulement {places_dispo} place(s) disponible(s) pour ce depart ce jour-la."
+            )
 
-            # Notifier les admins
-            User = get_user_model()
-            admin_emails = list(User.objects.filter(is_staff=True).values_list('email', flat=True))
-            if admin_emails:
-                try:
-                    send_mail(
-                        subject=f"Nouvelle réservation #{reservation.id}",
-                        message=f"Une nouvelle réservation a été créée par {utilisateur}. Référence: {reservation.reference if hasattr(reservation, 'reference') else reservation.id}.",
-                        from_email=settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else None,
-                        recipient_list=admin_emails,
-                        fail_silently=True,
-                    )
-                except Exception:
-                    pass
+        prix_total = (Decimal(depart.prix) * Decimal(nombre_places)).quantize(Decimal("0.01"))
 
-            return reservation
+        ticket = Ticket.objects.create(
+            bus=depart.bus,
+            user=utilisateur,
+            num_seiges=nombre_places,
+            prix=prix_total,
+        )
+
+        reservation = Reservation.objects.create(
+            depart=depart,
+            date_voyage=date_voyage,
+            user=utilisateur,
+            ticket=ticket,
+            nombre_places=nombre_places,
+            prix_total=prix_total,
+            expires_at=maintenant + timedelta(minutes=politique.delai_paiement_minutes),
+        )
+
+        User = get_user_model()
+        admin_emails = list(User.objects.filter(is_staff=True).values_list("email", flat=True))
+        if admin_emails:
+            try:
+                send_mail(
+                    subject=f"Nouvelle reservation #{reservation.id}",
+                    message=(
+                        f"Une nouvelle reservation a ete creee par {utilisateur}. "
+                        f"Reference: {getattr(reservation, 'reference', reservation.id)}."
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL if hasattr(settings, "DEFAULT_FROM_EMAIL") else None,
+                    recipient_list=admin_emails,
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
+
+        return reservation
 
     @classmethod
     def calculer_penalite(cls, reservation):
-        """Calcule le montant de la pénalité d'annulation pour une réservation."""
         politique = PolitiqueReservation.get_active()
-        pct = Decimal(politique.penalite_annulation_pct) / Decimal(100)
-        montant = (Decimal(reservation.prix_total) * pct).quantize(Decimal('0.01'))
-        return montant
+        datetime_depart = reservation.datetime_depart
+        heures_avant = (datetime_depart - timezone.now()).total_seconds() / 3600
+        if heures_avant >= politique.annulation_gratuite_heures:
+            return Decimal("0")
+        return (Decimal(reservation.prix_total) * Decimal(politique.penalite_annulation_pct) / Decimal("100")).quantize(
+            Decimal("0.01")
+        )

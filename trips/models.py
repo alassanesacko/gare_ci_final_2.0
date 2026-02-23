@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 
 
 class Category(models.Model):
@@ -142,40 +141,44 @@ class EtapeTrajet(models.Model):
         return f"{self.trip.nom} - Etape {self.ordre}"
 
 
-class Departure(models.Model):
-    # Legacy columns still present in DB schema.
-    date = models.DateField(null=True, blank=True)
-    time = models.TimeField(null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    trip = models.ForeignKey(Trip, on_delete=models.CASCADE)
-    bus = models.ForeignKey(Bus, on_delete=models.CASCADE)
-    date_depart = models.DateTimeField()
-    date_arrivee_estimee = models.DateTimeField()
-    places_disponibles = models.PositiveIntegerField()
+class Depart(models.Model):
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="departs")
+    bus = models.ForeignKey(Bus, on_delete=models.CASCADE, related_name="departs")
+    heure_depart = models.TimeField()
+    heure_arrivee = models.TimeField()
+    prix = models.DecimalField(max_digits=8, decimal_places=2)
+
     actif = models.BooleanField(default=True)
 
-    def get_remaining_seats(self):
-        total_seats = self.bus.capacite
-        booked_seats = self.reservation_set.filter(status__in=["EN_ATTENTE_VALIDATION", "VALIDEE", "CONFIRMEE"]).count()
-        return total_seats - booked_seats
-
-    def get_next_seat_number(self):
-        booked_count = self.reservation_set.filter(status__in=["EN_ATTENTE_VALIDATION", "VALIDEE", "CONFIRMEE"]).count()
-        if booked_count >= self.bus.capacite:
-            return None
-        return str(booked_count + 1)
+    class Meta:
+        verbose_name = "Départ"
+        verbose_name_plural = "Départs"
+        ordering = ["trip", "heure_depart"]
 
     def __str__(self):
-        return f"{self.trip.nom} ({self.date_depart})"
+        return f"{self.trip} — {self.heure_depart:%H:%M}"
 
-    def save(self, *args, **kwargs):
-        if self.date_depart:
-            local_departure = timezone.localtime(self.date_depart) if timezone.is_aware(self.date_depart) else self.date_depart
-            self.date = local_departure.date()
-            self.time = local_departure.time().replace(microsecond=0)
+    def places_disponibles_pour(self, date):
+        """
+        Capacite du bus - places deja reservees ce jour-la
+        (en ignorant ANNULEE/REJETEE/EXPIREE).
+        """
+        from django.db.models import Sum
+        from reservations.models import Reservation, ReservationStatus
 
-        self.is_active = bool(self.actif)
-        super().save(*args, **kwargs)
+        deja_reserves = (
+            Reservation.objects.filter(
+                depart=self,
+                date_voyage=date,
+                status__in=[
+                    ReservationStatus.EN_ATTENTE_VALIDATION,
+                    ReservationStatus.VALIDEE,
+                    ReservationStatus.CONFIRMEE,
+                ],
+            ).aggregate(total=Sum("nombre_places"))["total"]
+            or 0
+        )
+        return self.bus.capacite - deja_reserves
 
-    class Meta:
-        ordering = ["date_depart"]
+    def est_complet_pour(self, date):
+        return self.places_disponibles_pour(date) <= 0

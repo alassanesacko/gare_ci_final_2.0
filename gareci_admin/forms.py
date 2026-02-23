@@ -2,7 +2,7 @@ from django import forms
 from django.forms import BaseInlineFormSet, inlineformset_factory
 
 from reservations.models import ContactMessage
-from trips.models import Arret, Departure, EtapeTrajet, Segment, Trip, Ville
+from trips.models import Arret, Depart, EtapeTrajet, Segment, Trip, Ville
 
 
 class ContactReplyForm(forms.ModelForm):
@@ -145,43 +145,40 @@ class SegmentForm(forms.ModelForm):
         return cleaned_data
 
 
-class DepartureAdminForm(forms.ModelForm):
+class DepartForm(forms.ModelForm):
     class Meta:
-        model = Departure
-        fields = ["trip", "bus", "date_depart", "date_arrivee_estimee", "places_disponibles", "actif"]
+        model = Depart
+        fields = [
+            "trip",
+            "bus",
+            "heure_depart",
+            "heure_arrivee",
+            "actif",
+        ]
         widgets = {
-            "date_depart": forms.DateTimeInput(
-                attrs={"type": "datetime-local"},
-                format="%Y-%m-%dT%H:%M",
+            "heure_depart": forms.TimeInput(
+                attrs={"type": "time"},
+                format="%H:%M",
             ),
-            "date_arrivee_estimee": forms.DateTimeInput(
-                attrs={"type": "datetime-local"},
-                format="%Y-%m-%dT%H:%M",
+            "heure_arrivee": forms.TimeInput(
+                attrs={"type": "time"},
+                format="%H:%M",
             ),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["date_depart"].input_formats = ["%Y-%m-%dT%H:%M"]
-        self.fields["date_arrivee_estimee"].input_formats = ["%Y-%m-%dT%H:%M"]
-
     def clean(self):
-        cleaned_data = super().clean()
-        bus = cleaned_data.get("bus")
-        places_disponibles = cleaned_data.get("places_disponibles")
-        date_depart = cleaned_data.get("date_depart")
-        date_arrivee_estimee = cleaned_data.get("date_arrivee_estimee")
+        cleaned = super().clean()
+        h_depart = cleaned.get("heure_depart")
+        h_arrivee = cleaned.get("heure_arrivee")
 
-        if bus and places_disponibles is not None and places_disponibles > bus.capacite:
-            self.add_error(
-                "places_disponibles",
-                f"Le nombre de places disponibles ne peut pas depasser la capacite du bus ({bus.capacite}).",
-            )
+        if h_depart and h_arrivee and h_arrivee <= h_depart:
+            raise forms.ValidationError("L'heure d'arrivee doit etre apres l'heure de depart.")
+        return cleaned
 
-        if date_depart and date_arrivee_estimee and date_arrivee_estimee <= date_depart:
-            self.add_error(
-                "date_arrivee_estimee",
-                "La date d'arrivee estimee doit etre apres la date de depart.",
-            )
-
-        return cleaned_data
+    def save(self, commit=True):
+        depart = super().save(commit=False)
+        if depart.trip_id:
+            depart.prix = depart.trip.price
+        if commit:
+            depart.save()
+        return depart

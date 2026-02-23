@@ -1,72 +1,126 @@
 {% extends 'base.html' %}
-{% block title %}Confirmation de réservation - GareCI{% endblock %}
+{% block title %}Reservation - GareCI{% endblock %}
 
 {% block content %}
 <div class="auth-container">
-    <div class="auth-card">
+    <div class="auth-card reserve-card">
         <div class="auth-header">
             <i class="fas fa-ticket-alt"></i>
-            <h2>Confirmer votre réservation</h2>
+            <h2>Confirmer votre reservation</h2>
         </div>
 
-        <div class="reservation-details">
-            <h3>Détails du voyage :</h3>
+        <section class="reservation-details">
+            <h3>Recapitulatif du voyage</h3>
             <div class="detail-item">
                 <i class="fas fa-route"></i>
                 <span class="detail-label">Trajet :</span>
-                <span class="detail-value">{{ departure.trip.origin }} → {{ departure.trip.destination }}</span>
+                <span class="detail-value">{{ depart.trip.arret_depart.ville.nom }} -> {{ depart.trip.arret_arrivee.ville.nom }}</span>
             </div>
             <div class="detail-item">
                 <i class="fas fa-calendar-day"></i>
                 <span class="detail-label">Date :</span>
-                <span class="detail-value">{{ departure.date|date:"l d F Y" }}</span>
+                <span class="detail-value">{{ date_voyage|date:"l d F Y" }}</span>
             </div>
             <div class="detail-item">
                 <i class="fas fa-clock"></i>
-                <span class="detail-label">Heure :</span>
-                <span class="detail-value">{{ departure.time|time:'H:i' }}</span>
+                <span class="detail-label">Horaire :</span>
+                <span class="detail-value">{{ depart.heure_depart|time:"H:i" }} -> {{ depart.heure_arrivee|time:"H:i" }}</span>
             </div>
             <div class="detail-item">
-                <i class="fas fa-bus"></i>
-                <span class="detail-label">Bus :</span>
-                <span class="detail-value">{{ departure.bus }}</span>
+                <i class="fas fa-random"></i>
+                <span class="detail-label">Type :</span>
+                <span class="detail-value">
+                    {% if type_trajet == 'Direct' %}
+                        Direct
+                    {% else %}
+                        Via {{ escales|join:", " }}
+                    {% endif %}
+                </span>
             </div>
             <div class="detail-item">
-                <i class="fas fa-chair"></i>
-                <span class="detail-label">Places disponibles :</span>
-                <span class="detail-value">{{ departure.get_remaining_seats }}</span>
+                <i class="fas fa-star"></i>
+                <span class="detail-label">Equipements :</span>
+                <span class="detail-value equipements-inline">
+                    {% if depart.bus.categorie and depart.bus.categorie.a_wifi %}<span><i class="fas fa-wifi"></i> Wifi</span>{% endif %}
+                    {% if depart.bus.categorie and depart.bus.categorie.a_climatisation %}<span><i class="fas fa-fan"></i> Clim</span>{% endif %}
+                    {% if depart.bus.categorie and depart.bus.categorie.a_prise_usb %}<span><i class="fas fa-plug"></i> USB</span>{% endif %}
+                    {% if depart.bus.categorie and depart.bus.categorie.a_wc %}<span><i class="fas fa-restroom"></i> WC</span>{% endif %}
+                    {% if depart.bus.categorie and depart.bus.categorie.a_repas %}<span><i class="fas fa-utensils"></i> Repas</span>{% endif %}
+                    {% if not depart.bus.categorie %}<span>Non renseignes</span>{% endif %}
+                </span>
             </div>
-            <div class="detail-item price">
-                <i class="fas fa-money-bill-wave"></i>
-                <span class="detail-label">Prix :</span>
-                <span class="detail-value">{{ departure.trip.price }} FCFA</span>
-            </div>
-            <div class="detail-item info">
-                <i class="fas fa-info-circle"></i>
-                <span class="detail-label">Numéro de siège :</span>
-                <span class="detail-value">Attribué automatiquement</span>
-            </div>
-        </div>
+        </section>
 
         <form method="post" class="auth-form">
             {% csrf_token %}
-            
-            {% if error %}
+
+            {% if messages %}
             <div class="alert alert-error">
-                <i class="fas fa-exclamation-circle"></i>
-                {{ error }}
+                {% for message in messages %}
+                <p>{{ message }}</p>
+                {% endfor %}
             </div>
             {% endif %}
 
+            {% if places_dispo > 0 %}
+            <div class="form-group">
+                <label for="id_nombre_places"><i class="fas fa-users"></i> Nombre de places</label>
+                <select id="id_nombre_places" name="nombre_places" class="form-control" required>
+                    {% for i in "12345"|make_list %}
+                    {% with value=forloop.counter %}
+                    {% if value <= places_dispo %}
+                    <option value="{{ value }}" {% if form.nombre_places.value|stringformat:'s' == value|stringformat:'s' %}selected{% endif %}>{{ value }}</option>
+                    {% endif %}
+                    {% endwith %}
+                    {% endfor %}
+                </select>
+                {% if form.nombre_places.errors %}
+                <div class="errorlist">{{ form.nombre_places.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="detail-item price">
+                <i class="fas fa-money-bill-wave"></i>
+                <span class="detail-label">Prix total :</span>
+                <span id="prix-total" class="detail-value" data-unit-price="{{ depart.prix|floatformat:2 }}">{{ depart.prix|floatformat:0 }} FCFA</span>
+            </div>
+
+            <p class="reservation-note">Votre demande sera validee par notre equipe avant paiement.</p>
+
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary btn-block">
-                    <i class="fas fa-check-circle"></i> Confirmer la réservation
+                    <i class="fas fa-check-circle"></i> Confirmer la reservation
                 </button>
-                <a href="{% url 'trips:home' %}" class="btn btn-outline btn-block">
-                    <i class="fas fa-times-circle"></i> Annuler
+                <a href="{% url 'trips:search_results' %}" class="btn btn-outline btn-block">
+                    <i class="fas fa-arrow-left"></i> Modifier ma recherche
                 </a>
             </div>
+            {% else %}
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                Ce depart est complet. Aucune place disponible.
+            </div>
+            {% endif %}
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const qtySelect = document.getElementById("id_nombre_places");
+    const totalNode = document.getElementById("prix-total");
+    if (!qtySelect || !totalNode) return;
+
+    const unitPrice = parseFloat(totalNode.dataset.unitPrice || "0") || 0;
+
+    function refreshTotal() {
+        const qty = parseInt(qtySelect.value || "1", 10);
+        const total = unitPrice * qty;
+        totalNode.textContent = total.toLocaleString("fr-FR", { maximumFractionDigits: 0 }) + " FCFA";
+    }
+
+    qtySelect.addEventListener("change", refreshTotal);
+    refreshTotal();
+});
+</script>
 {% endblock %}

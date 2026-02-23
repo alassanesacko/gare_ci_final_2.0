@@ -68,11 +68,12 @@
                     </li>
                     
                     <li class="{% if active_tab == 'departures' %}active{% endif %}">
-                        <a href="{% url 'dashboard:departure_list' %}">
+                        <a href="{% url 'dashboard:depart_list' %}">
                             <i class="fas fa-calendar-alt"></i> Départs
                         </a>
                         <ul class="submenu">
-                            <li><a href="{% url 'dashboard:departure_add' %}"><i class="fas fa-plus"></i> Ajouter</a></li>
+                            <li><a href="{% url 'dashboard:depart_create' %}"><i class="fas fa-plus"></i> Ajouter</a></li>
+                            <li><a href="{% url 'dashboard:depart_list' %}"><i class="fas fa-list"></i> Liste</a></li>
                         </ul>
                     </li>
                     
@@ -221,6 +222,16 @@
 
             <!-- Page Content -->
             <div class="content-wrapper">
+                {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                    <li class="message {% if message.tags %}message-{{ message.tags }}{% else %}message-info{% endif %}">
+                        <span>{{ message }}</span>
+                        <button type="button" class="close-message">&times;</button>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
                 {% block content %}
                 <!-- Main content block to be overridden by child templates -->
                 {% endblock %}

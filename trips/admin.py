@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Trip, Bus, Category, Departure, Ville, Arret, Segment, EtapeTrajet
+from .models import Trip, Bus, Category, Depart, Ville, Arret, Segment, EtapeTrajet
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -41,8 +41,8 @@ class TripAdmin(admin.ModelAdmin):
     search_fields = ('nom', 'ville_depart__nom', 'ville_arrivee__nom')
     list_filter = ('ville_depart', 'ville_arrivee', 'actif')
 
-@admin.register(Departure)
-class DepartureAdmin(admin.ModelAdmin):
-    list_display = ('trip', 'bus', 'date_depart', 'date_arrivee_estimee', 'places_disponibles', 'actif')
-    search_fields = ('trip__nom', 'bus__immatriculation')
-    list_filter = ('date_depart', 'actif')
+@admin.register(Depart)
+class DepartAdmin(admin.ModelAdmin):
+    list_display = ("trip", "bus", "heure_depart", "heure_arrivee", "prix", "actif")
+    search_fields = ("trip__nom", "bus__immatriculation")
+    list_filter = ("actif",)

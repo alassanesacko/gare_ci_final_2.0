@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}Réserver un trajet{% endblock %}
+{% block title %}Reserver un trajet{% endblock %}
 
 {% block content %}
-  <h2>Réserver un trajet</h2>
+  <h2>Reserver un trajet</h2>
 
   {% if user.is_authenticated %}
     <form method="post">
@@ -11,31 +11,31 @@
 
       <div>
         <label for="trajet">Trajet :</label>
-        <input type="text" id="trajet" value="{{ trajet.departure_city }} → {{ trajet.arrival_city }}" disabled>
+        <input type="text" id="trajet" value="{{ trajet.depart.trip.arret_depart.ville.nom }} -> {{ trajet.depart.trip.arret_arrivee.ville.nom }}" disabled>
       </div>
 
       <div>
         <label for="date">Date :</label>
-        <input type="text" id="date" value="{{ trajet.travel_date }}" disabled>
+        <input type="text" id="date" value="{{ trajet.date_voyage }}" disabled>
       </div>
 
       <div>
         <label for="bus">Bus :</label>
-        <input type="text" id="bus" value="{{ trajet.bus.immatriculation }}" disabled>
+        <input type="text" id="bus" value="{{ trajet.depart.bus.immatriculation }}" disabled>
       </div>
 
       <div>
-        <label for="seats">Nombre de places à réserver :</label>
-        {{ form.seats }}
-        {% if form.seats.errors %}
-          <div class="error">{{ form.seats.errors }}</div>
+        <label for="nombre_places">Nombre de places a reserver :</label>
+        {{ form.nombre_places }}
+        {% if form.nombre_places.errors %}
+          <div class="error">{{ form.nombre_places.errors }}</div>
         {% endif %}
       </div>
 
-      <button type="submit">Confirmer la réservation</button>
+      <button type="submit">Confirmer la reservation</button>
     </form>
   {% else %}
-    <p>Vous devez être connecté pour réserver un trajet.</p>
-    <a href="{% url 'login' %}?next={{ request.path }}">Se connecter</a>
+    <p>Vous devez etre connecte pour reserver un trajet.</p>
+    <a href="{% url 'accounts:login' %}?next={{ request.path }}">Se connecter</a>
   {% endif %}
 {% endblock %}

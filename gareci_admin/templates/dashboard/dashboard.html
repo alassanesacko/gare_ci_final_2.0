@@ -53,8 +53,8 @@
                 <tr>
                     <td>#{{ reservation.id }}</td>
                     <td>{{ reservation.user.username }}</td>
-                    <td>{{ reservation.departure.trip.ville_depart }} → {{ reservation.departure.trip.ville_arrivee }}</td>
-                    <td>{{ reservation.departure.date_depart|date:'d/m/Y' }} {{ reservation.departure.date_depart|time:'H:i' }}</td>
+                    <td>{{ reservation.depart.trip.ville_depart }} → {{ reservation.depart.trip.ville_arrivee }}</td>
+                    <td>{{ reservation.date_voyage|date:'d/m/Y' }} {{ reservation.heure_depart|time:'H:i' }}</td>
                     <td>{{ reservation.booked_at|date:'d/m/Y' }} a {{ reservation.booked_at|time:'H:i' }}</td>
                     <td>
                         <span class="status-badge
@@ -93,7 +93,7 @@
 <div class="departures-container">
     <div class="departures-header">
         <h2><i class="fas fa-bus"></i> Liste des departs</h2>
-        <a href="{% url 'dashboard:departure_add' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter un depart</a>
+        <a href="{% url 'dashboard:depart_create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter un depart</a>
     </div>
 
     <table class="departures-table">
@@ -112,15 +112,15 @@
             <tr>
                 <td>{{ departure.trip }}</td>
                 <td>{{ departure.bus }}</td>
-                <td class="datetime">{{ departure.date_depart|date:"d/m/Y" }}</td>
-                <td class="datetime">{{ departure.date_depart|time:"H:i" }}</td>
+                <td class="datetime">-</td>
+                <td class="datetime">{{ departure.heure_depart|time:"H:i" }}</td>
                 <td class="{% if departure.actif %}status-active{% else %}status-inactive{% endif %}">
                     {{ departure.actif|yesno:"Actif,Inactif" }}
                 </td>
                 <td>
                     <div class="action-buttons">
-                        <a href="{% url 'dashboard:departure_edit' departure.pk %}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i> Modifier</a>
-                        <a href="{% url 'dashboard:departure_delete' departure.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Voulez-vous vraiment supprimer ce depart ?');"><i class="fas fa-trash"></i> Supprimer</a>
+                        <a href="{% url 'dashboard:depart_edit' departure.pk %}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i> Modifier</a>
+                        <a href="{% url 'dashboard:depart_delete' departure.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Voulez-vous vraiment supprimer ce depart ?');"><i class="fas fa-trash"></i> Supprimer</a>
                     </div>
                 </td>
             </tr>

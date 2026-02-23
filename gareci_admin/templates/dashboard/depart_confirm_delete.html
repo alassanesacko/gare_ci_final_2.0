@@ -1,0 +1,30 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Supprimer un depart{% endblock %}
+{% block content %}
+<div class="delete-container">
+    <div class="delete-header">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h2>Confirmer la suppression</h2>
+    </div>
+
+    <div class="confirmation-message">
+        <p>Vous etes sur le point de supprimer ce depart :</p>
+        <p><strong>{{ object.trip.arret_depart.ville.nom }} -> {{ object.trip.arret_arrivee.ville.nom }}</strong></p>
+        <p>Depart: {{ object.heure_depart|time:"H:i" }} | Arrivee: {{ object.heure_arrivee|time:"H:i" }}</p>
+        <p>Bus: {{ object.bus }} | Prix: {{ object.prix }} FCFA</p>
+        <p>Attention : supprimer ce depart supprimera aussi toutes les reservations futures associees.</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash-alt"></i> Confirmer la suppression
+            </button>
+            <a href="{% url 'dashboard:depart_list' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

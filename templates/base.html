@@ -12,11 +12,11 @@
     <link rel="stylesheet" href="{% static 'css/reservations/reservationlistes.css' %}">
     <link rel="stylesheet" href="{% static 'css/reservations/messageliste.css' %}">
     <link rel="stylesheet" href="{% static 'css/reservations/reserves.css' %}">
+    <link rel="stylesheet" href="{% static 'css/about.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!--<script src="{% static 'js/scripts.js' %}" defer></script>-->
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Header avec navigation -->
     <header class="header">
         <div class="container">
             <div class="header-content">
@@ -26,29 +26,30 @@
                         <h1>Gare<span>CI</span></h1>
                     </a>
                 </div>
-                
+
                 <nav class="main-nav">
-                    <a href="{% url 'trips:home' %}" class="nav-link {% if active_tab == 'home' %}active{% endif %}" >Accueil</a>
+                    <a href="{% url 'trips:home' %}" class="nav-link {% if active_tab == 'home' %}active{% endif %}">Accueil</a>
+                    <a href="{% url 'trips:about' %}" class="nav-link {% if active_tab == 'about' %}active{% endif %}">A propos</a>
                     {% if user.is_authenticated %}
                         {% if user.is_staff %}
                             <a href="{% url 'dashboard:index' %}" class="nav-link">Tableau de bord</a>
                         {% else %}
-                            <a href="{% url 'reservations:list' %}" class="nav-link {% if active_tab == 'reservation' %}active{% endif %}">Mes Réservations</a>
-                            <a href="{% url 'reservations:messages' %}" class="nav-link {% if active_tab == 'message' %}active{% endif %}">Mes messages</a>
+                            <a href="{% url 'reservations:list' %}" class="nav-link {% if active_tab == 'reservation' %}active{% endif %}">Mes reservations</a>
+                            <a href="{% url 'accounts:profile' %}" class="nav-link {% if active_tab == 'profile' %}active{% endif %}">Mon profil</a>
                         {% endif %}
                     {% endif %}
-                    <a href="{% url 'trips:home' %}#contact"  class="nav-link ">Contacts</a>
+                    <a href="{% url 'accounts:contact' %}" class="nav-link {% if active_tab == 'contact' %}active{% endif %}">Contact</a>
                 </nav>
-                
+
                 <div class="auth-buttons">
                     {% if user.is_authenticated %}
                         <form action="{% url 'accounts:logout' %}" method="post">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-outline">Déconnexion</button>
+                            <button type="submit" class="btn btn-outline">Deconnexion</button>
                         </form>
                     {% else %}
                         <a href="{% url 'accounts:login' %}" class="btn btn-outline">Connexion</a>
-                        <a href="{% url 'accounts:register' %}" class="btn btn-primary">Inscription</a>
+                        <a href="{% url 'accounts:register' %}" class="btn btn-primary">S'inscrire</a>
                     {% endif %}
                     <button class="mobile-menu-btn" id="mobile-menu-btn">
                         <i class="fas fa-bars"></i>
@@ -58,17 +59,12 @@
         </div>
     </header>
 
-    <!-- Contenu principal -->
     <main class="main-content">
         <div class="container">
-
-            {% block content %}
-            <!-- Contenu spécifique à chaque page -->
-            {% endblock %}
+            {% block content %}{% endblock %}
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
@@ -77,22 +73,22 @@
                         <i class="fas fa-bus"></i>
                         <h2>Gare<span>CI</span></h2>
                     </div>
-                    <p>Plateforme de réservation de billets de bus en Côte d'Ivoire</p>
+                    <p>Gare principale d'Adjame, Abidjan, Cote d'Ivoire</p>
+                    <p>+225 00 00 00 00</p>
+                    <p>contact@gareci.ci</p>
                 </div>
-                
+
                 <div class="footer-section">
                     <h3>Liens utiles</h3>
                     <ul>
-                        <li><a href="{% url 'trips:home' %}">Accueil</a></li>
-                        {% if user.is_authenticated %}
-                            <li><a href="{% url 'reservations:list' %}">Mes Réservations</a></li>
-                        {% endif %}
-                        <li><a href="#contact">Contact</a></li>
+                        <li><a href="{% url 'accounts:contact' %}">Contact</a></li>
+                        <li><a href="{% url 'trips:about' %}">A propos</a></li>
+                        <li><a href="{% url 'trips:cgv' %}">CGV</a></li>
                     </ul>
                 </div>
-                
+
                 <div class="footer-section">
-                    <h3>Réseaux sociaux</h3>
+                    <h3>Reseaux sociaux</h3>
                     <div class="social-links">
                         <a href="#"><i class="fab fa-facebook-f"></i></a>
                         <a href="#"><i class="fab fa-twitter"></i></a>
@@ -100,9 +96,9 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="footer-bottom">
-                <p>&copy; {% now "Y" %} GareCI. Tous droits réservés.</p>
+                <p>&copy; {% now "Y" %} GareCI. Tous droits reserves.</p>
             </div>
         </div>
     </footer>

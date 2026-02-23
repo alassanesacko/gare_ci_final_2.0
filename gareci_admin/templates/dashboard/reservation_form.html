@@ -16,13 +16,7 @@
                 <div class="form-group">
                     {{ field.label_tag }}
                     
-                    {% if field.name == 'departure_date' or field.name == 'departure_time' %}
-                        <div class="datetime-input">
-                            {{ field }}
-                        </div>
-                    {% else %}
-                        {{ field }}
-                    {% endif %}
+                    {{ field }}
                     
                     {% if field.help_text %}
                         <span class="helptext">{{ field.help_text }}</span>

@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Accueil{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home_client.css' %}">
+{% endblock %}
+
+{% block content %}
+{% now "Y-m-d" as today_date %}
+<section class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <h1>Voyagez en toute securite a travers la Cote d'Ivoire</h1>
+            <p>Reservez vos billets de bus en ligne facilement et rapidement</p>
+            <a href="#search-client" class="btn btn-primary">Voir les trajets disponibles</a>
+        </div>
+    </div>
+</section>
+
+<div id="search-client"></div>
+<section class="client-hero">
+    <div class="client-hero-inner">
+        <div class="client-hero-copy">
+            <h1>Voyagez sereinement a travers la Cote d'Ivoire</h1>
+            <p>Des trajets fiables, des departs reguliers et une reservation simple en quelques clics.</p>
+        </div>
+
+        <form method="get" action="{% url 'trips:search_results' %}" class="client-search-form">
+            <div class="search-field">
+                <label for="ville_depart">Ville depart</label>
+                <input id="ville_depart" type="text" name="ville_depart" list="villes-depart-list" placeholder="Ex: Abidjan">
+            </div>
+
+            <div class="search-field">
+                <label for="ville_arrivee">Ville arrivee</label>
+                <input id="ville_arrivee" type="text" name="ville_arrivee" list="villes-arrivee-list" placeholder="Ex: Bouake">
+            </div>
+
+            <div class="search-field">
+                <label for="date">Date de voyage</label>
+                <input id="date" type="date" name="date" min="{% now 'Y-m-d' %}" value="{% now 'Y-m-d' %}">
+            </div>
+
+            <div class="search-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Rechercher
+                </button>
+            </div>
+        </form>
+
+        <datalist id="villes-depart-list">
+            {% for ville in villes %}
+            <option value="{{ ville.nom }}"></option>
+            {% endfor %}
+        </datalist>
+        <datalist id="villes-arrivee-list">
+            {% for ville in villes %}
+            <option value="{{ ville.nom }}"></option>
+            {% endfor %}
+        </datalist>
+    </div>
+</section>
+
+<section class="advantages">
+    <article class="adv-card">
+        <i class="fas fa-shield-alt"></i>
+        <h2>Securite</h2>
+        <p>Des trajets suivis, des vehicules controles et une equipe attentive.</p>
+    </article>
+    <article class="adv-card">
+        <i class="fas fa-couch"></i>
+        <h2>Confort</h2>
+        <p>Des bus adaptes aux longues distances pour voyager dans de bonnes conditions.</p>
+    </article>
+    <article class="adv-card">
+        <i class="fas fa-clock"></i>
+        <h2>Ponctualite</h2>
+        <p>Des horaires clairs et des departs planifies pour limiter les retards.</p>
+    </article>
+</section>
+
+<section class="popular-destinations">
+    <div class="section-head">
+        <h2>Destinations populaires</h2>
+        <p>Les trajets les plus reserves par nos voyageurs.</p>
+    </div>
+
+    <div class="popular-grid">
+        {% for trip in popular_trips %}
+        <a
+            href="{% url 'trips:search_results' %}?ville_depart={{ trip.ville_depart.nom|urlencode }}&ville_arrivee={{ trip.ville_arrivee.nom|urlencode }}&date={{ today_date }}"
+            class="destination-card"
+        >
+            <div class="route">{{ trip.ville_depart.nom }} -> {{ trip.ville_arrivee.nom }}</div>
+            <div class="meta">
+                <span>Prix a partir de</span>
+                <strong>{{ trip.price }} FCFA</strong>
+            </div>
+        </a>
+        {% empty %}
+        <div class="no-data">Aucun trajet populaire disponible pour le moment.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

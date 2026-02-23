@@ -51,7 +51,7 @@ class AffectationConducteur(models.Model):
 		('REMPLACANT', 'Remplaçant'),
 	]
 
-	departure = models.ForeignKey('trips.Departure', on_delete=models.CASCADE, related_name='affectations_conducteurs')
+	departure = models.ForeignKey('trips.Depart', on_delete=models.CASCADE, related_name='affectations_conducteurs')
 	conducteur = models.ForeignKey(Conducteur, on_delete=models.CASCADE, related_name='affectations')
 	role = models.CharField(max_length=12, choices=ROLE, default='PRINCIPAL')
 
