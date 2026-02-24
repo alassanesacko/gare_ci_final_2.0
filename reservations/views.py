@@ -58,10 +58,31 @@ def reserve(request, depart_id, date_str):
         actif=True,
     )
 
-    try:
-        date_voyage = datetime.strptime(date_str, "%Y-%m-%d").date()
-    except ValueError as exc:
-        raise Http404 from exc
+
+    # Par défaut, on prend la date de l'URL
+    date_voyage = None
+    if request.method == "POST":
+        # Si le formulaire contient une date, on la prend
+        date_input = request.POST.get("reservation_date")
+        if date_input:
+            try:
+                date_voyage = datetime.strptime(date_input, "%Y-%m-%d").date()
+            except ValueError:
+                date_voyage = None
+        else:
+            try:
+                date_voyage = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                date_voyage = None
+    else:
+        try:
+            date_voyage = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            date_voyage = None
+
+    if not date_voyage:
+        messages.error(request, "Date de voyage invalide.")
+        return redirect("search_results")
 
     if date_voyage < timezone.now().date():
         messages.error(request, "Cette date est déjà passée.")

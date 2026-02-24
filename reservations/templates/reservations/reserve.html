@@ -115,6 +115,14 @@
                     <form method="post" id="reservation-form">
                         {% csrf_token %}
                         
+                        <!-- Date Selection (main reservation date) -->
+                        <div class="form-group">
+                            <label for="reservation-date" class="form-label">
+                                <i class="fas fa-calendar-day"></i> Date de réservation
+                            </label>
+                            <input type="date" id="reservation-date" name="reservation_date" class="form-control" value="{{ date_voyage|date:'Y-m-d' }}" min="{{ date_voyage|date:'Y-m-d' }}" required>
+                        </div>
+
                         <!-- Places Selection -->
                         <div class="form-group">
                             <label for="id_nombre_places" class="form-label">
