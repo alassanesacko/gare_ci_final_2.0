@@ -4,235 +4,39 @@
   <meta charset="utf-8" />
   <title>Billet {{ reference }}</title>
   <style>
-    @page {
-      size: A5 landscape;
-      margin: 10mm;
-    }
-
-    body {
-      margin: 0;
-      font-family: DejaVu Sans, Arial, sans-serif;
-      color: #1f2937;
-      font-size: 11px;
-    }
-
-    .ticket {
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
-      padding: 12px;
-    }
-
-    .header {
-      display: table;
-      width: 100%;
-      margin-bottom: 10px;
-      border-bottom: 2px solid #ff6b00;
-      padding-bottom: 8px;
-    }
-
-    .header-left,
-    .header-right {
-      display: table-cell;
-      vertical-align: middle;
-    }
-
-    .header-right {
-      text-align: right;
-      width: 36%;
-    }
-
-    .logo {
-      display: inline-block;
-      width: 34px;
-      height: 34px;
-      line-height: 34px;
-      border-radius: 8px;
-      background: #ff6b00;
-      color: #fff;
-      text-align: center;
-      font-weight: 700;
-      margin-right: 8px;
-      font-size: 16px;
-    }
-
-    .title {
-      display: inline-block;
-      vertical-align: top;
-    }
-
-    .title h1 {
-      margin: 0;
-      font-size: 16px;
-      color: #111827;
-      letter-spacing: 0.04em;
-    }
-
-    .title p {
-      margin: 2px 0 0;
-      color: #6b7280;
-      font-size: 10px;
-    }
-
-    .ref {
-      font-weight: 700;
-      font-size: 12px;
-      color: #111827;
-    }
-
-    .layout {
-      display: table;
-      width: 100%;
-    }
-
-    .left,
-    .right {
-      display: table-cell;
-      vertical-align: top;
-    }
-
-    .left {
-      width: 74%;
-      padding-right: 10px;
-    }
-
-    .right {
-      width: 26%;
-      text-align: center;
-      border-left: 1px dashed #d1d5db;
-      padding-left: 10px;
-    }
-
-    .qr {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 4px;
-      box-sizing: border-box;
-    }
-
-    .qr img {
-      width: 100%;
-      height: 100%;
-    }
-
-    .section {
-      margin-bottom: 8px;
-      border: 1px solid #eceff1;
-      border-radius: 8px;
-      padding: 8px;
-    }
-
-    .section h3 {
-      margin: 0 0 6px;
-      font-size: 11px;
-      text-transform: uppercase;
-      color: #ff6b00;
-      letter-spacing: 0.04em;
-    }
-
-    .row {
-      margin-bottom: 4px;
-    }
-
-    .label {
-      font-weight: 700;
-      color: #374151;
-      margin-right: 4px;
-    }
-
-    .equip {
-      display: inline-block;
-      margin: 2px 4px 0 0;
-      padding: 2px 6px;
-      border-radius: 999px;
-      border: 1px solid #e5e7eb;
-      background: #fafafa;
-      font-size: 10px;
-    }
-
-    .price {
-      font-size: 15px;
-      font-weight: 700;
-      color: #111827;
-    }
-
-    .footer {
-      margin-top: 8px;
-      border-top: 1px solid #e5e7eb;
-      padding-top: 6px;
-      font-size: 10px;
-      color: #4b5563;
-      text-align: center;
-      line-height: 1.45;
-    }
+    @page { size: A5 landscape; margin: 10mm; }
+    body { margin: 0; font-family: DejaVu Sans, Arial, sans-serif; color: #1a3c6e; font-size: 11px; }
+    .billet { display: flex; border: 1px solid #e5e7eb; border-radius: 10px; }
+    .partie-gauche { flex: 2; padding: 20px; }
+    .partie-droite { flex: 0.8; background: #1a3c6e; color: white; text-align: center; border-left: 3px dashed #ccc; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .qr { margin: 12px 0; }
+    .titre { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+    .info { margin-bottom: 6px; }
+    .montant { font-size: 16px; font-weight: bold; margin-top: 10px; }
+    .footer { margin-top: 18px; font-size: 10px; color: #888; }
   </style>
 </head>
 <body>
-  <div class="ticket">
-    <div class="header">
-      <div class="header-left">
-        <span class="logo">G</span>
-        <div class="title">
-          <h1>BILLET DE VOYAGE</h1>
-          <p>GareCI</p>
-        </div>
-      </div>
-      <div class="header-right">
-        <div class="ref">Ref: {{ reference }}</div>
-      </div>
+  <div class="billet">
+    <div class="partie-gauche">
+      <div class="titre">🚌 GareCI   BILLET DE VOYAGE</div>
+      <div class="info">Réf: {{ reference }}</div>
+      <div class="info">ABIDJAN  ────────►  BOUAKÉ</div>
+      <div class="info">Date    : {{ reservation.date_voyage|date:'d/m/Y' }}</div>
+      <div class="info">Départ  : {{ reservation.heure_depart|time:'H:i' }}</div>
+      <div class="info">Arrivée : {{ reservation.heure_arrivee|time:'H:i' }}</div>
+      <div class="info">Places  : {{ reservation.nombre_places }}</div>
+      <div class="info">Bus     : {{ depart.bus.categorie.nom }}</div>
+      <div class="info">Passager: {{ utilisateur.get_full_name|default:utilisateur.username }}</div>
+      <div class="info">Tél     : {{ utilisateur.phone }}</div>
+      <div class="montant">{{ reservation.prix_total }} FCFA</div>
+      <div class="footer">Présentez ce billet 15 min avant le départ<br>GareCI • Adjamé • +225 07 00 00</div>
     </div>
-
-    <div class="layout">
-      <div class="left">
-        <div class="section">
-          <h3>Passager</h3>
-          <div class="row"><span class="label">Nom complet:</span>{{ user.first_name }} {{ user.last_name }}</div>
-          <div class="row"><span class="label">Email:</span>{{ user.email|default:"-" }}</div>
-          <div class="row"><span class="label">Telephone:</span>{{ user.phone|default:"-" }}</div>
-        </div>
-
-        <div class="section">
-          <h3>Voyage</h3>
-          <div class="row"><span class="label">Depart:</span>{{ trip.arret_depart.ville.nom }} - {{ trip.arret_depart.nom }} | {{ reservation.date_voyage|date:"d/m/Y" }} {{ reservation.heure_depart|time:"H:i" }}</div>
-          <div class="row"><span class="label">Arrivee:</span>{{ trip.arret_arrivee.ville.nom }} - {{ trip.arret_arrivee.nom }} | {{ reservation.heure_arrivee|time:"H:i" }}</div>
-          <div class="row"><span class="label">Type:</span>{% if type_trajet == "Direct" %}Direct{% else %}{{ type_trajet }}{% endif %}</div>
-        </div>
-
-        <div class="section">
-          <h3>Bus</h3>
-          <div class="row"><span class="label">Categorie:</span>{{ bus.categorie.nom|default:"-" }}</div>
-          <div class="row"><span class="label">Immatriculation:</span>{{ bus.immatriculation }}</div>
-          <div class="row">
-            <span class="label">Equipements:</span>
-            {% if bus.categorie and bus.categorie.a_wifi %}<span class="equip">WiFi</span>{% endif %}
-            {% if bus.categorie and bus.categorie.a_climatisation %}<span class="equip">Clim</span>{% endif %}
-            {% if bus.categorie and bus.categorie.a_prise_usb %}<span class="equip">USB</span>{% endif %}
-            {% if bus.categorie and bus.categorie.a_wc %}<span class="equip">WC</span>{% endif %}
-            {% if bus.categorie and bus.categorie.a_repas %}<span class="equip">Repas</span>{% endif %}
-            {% if not bus.categorie %}<span class="equip">-</span>{% endif %}
-          </div>
-        </div>
-
-        <div class="section">
-          <h3>Siege et paiement</h3>
-          <div class="row"><span class="label">Numero de siege:</span>{{ reservation.seat_number|default:"-" }}</div>
-          <div class="row price">{{ reservation.prix_total }} FCFA</div>
-        </div>
+    <div class="partie-droite">
+      <div class="qr">
+        <img src="data:image/png;base64,{{ qr_b64 }}" width="120" height="120" alt="QR Code" />
       </div>
-
-      <div class="right">
-        <div class="qr">
-          <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR code" />
-        </div>
-      </div>
-    </div>
-
-    <div class="footer">
-      Presentez ce billet 15 min avant le depart.<br>
-      GareCI - Gare principale d'Adjame, Abidjan | +225 00 00 00 00 | contact@gareci.ci<br>
-      Bon voyage !
+      <div>PAY-XXXX</div>
     </div>
   </div>
 </body>

@@ -1,0 +1,195 @@
+
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Billet {{ reference }}</title>
+
+
+<style>
+  .billet-container {
+    max-width: 600px;
+    margin: 30px auto;
+    padding: 20px;
+    border: 2px solid #1a3c6e;
+    border-radius: 10px;
+    background: white;
+  }
+  .billet-header {
+    text-align: center;
+    border-bottom: 2px dashed #1a3c6e;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+  }
+  .billet-header h1 {
+    margin: 0;
+    color: #1a3c6e;
+    font-size: 24px;
+  }
+  .billet-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+  }
+  .billet-section {
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 5px;
+  }
+  .billet-section h3 {
+    margin: 0 0 10px 0;
+    color: #1a3c6e;
+    font-size: 14px;
+    text-transform: uppercase;
+  }
+  .billet-info {
+    margin: 8px 0;
+    font-size: 14px;
+  }
+  .billet-label {
+    font-weight: bold;
+    color: #1a3c6e;
+  }
+  .qr-section {
+    text-align: center;
+    padding: 20px;
+    background: #f5f5f5;
+    border-radius: 5px;
+  }
+  .qr-section img {
+    width: 150px;
+    height: 150px;
+  }
+  .billet-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px dashed #1a3c6e;
+    font-size: 12px;
+    color: #666;
+  }
+  .prix-total {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1a3c6e;
+    text-align: center;
+    padding: 15px;
+    background: #e8eef7;
+    border-radius: 5px;
+    margin: 20px 0;
+  }
+  .print-button {
+    text-align: center;
+    margin-top: 20px;
+  }
+  .btn-print {
+    padding: 10px 30px;
+    background: #1a3c6e;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .btn-print:hover {
+    background: #0f2847;
+  }
+  @media print {
+    .print-button, .btn-print {
+      display: none;
+    }
+    .billet-container {
+      border: none;
+      margin: 0;
+      padding: 0;
+    }
+  }
+</style>
+
+<div class="billet-container">
+  <div class="billet-header">
+    <h1>🚌 GareCI - BILLET DE VOYAGE</h1>
+    <p>Réf: <strong>{{ reference }}</strong></p>
+  </div>
+
+  <div class="billet-content">
+    <div class="billet-section">
+      <h3>📍 Trajet</h3>
+      <div class="billet-info">
+        <span class="billet-label">De:</span> {{ reservation.depart.trip.arret_depart.ville.nom }}
+      </div>
+      <div class="billet-info">
+        <span class="billet-label">À:</span> {{ reservation.depart.trip.arret_arrivee.ville.nom }}
+      </div>
+      <div class="billet-info">
+        <span class="billet-label">Type:</span> {{ type_trajet }}
+      </div>
+      {% if escales_villes %}
+      <div class="billet-info">
+        <span class="billet-label">Escales:</span> {{ escales_villes }}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="billet-section">
+      <h3>🕐 Horaires</h3>
+      <div class="billet-info">
+        <span class="billet-label">Date:</span> {{ reservation.date_voyage|date:'d/m/Y' }}
+      </div>
+      <div class="billet-info">
+        <span class="billet-label">Départ:</span> {{ reservation.heure_depart|time:'H:i' }}
+      </div>
+      <div class="billet-info">
+        <span class="billet-label">Arrivée:</span> {{ reservation.heure_arrivee|time:'H:i' }}
+      </div>
+    </div>
+  </div>
+
+  <div class="billet-content">
+    <div class="billet-section">
+      <h3>👤 Passager</h3>
+      <div class="billet-info">
+        <span class="billet-label">Nom:</span> {{ utilisateur.get_full_name|default:utilisateur.username }}
+      </div>
+      <div class="billet-info">
+        <span class="billet-label">Téléphone:</span> {{ utilisateur.phone|default:"Non fourni" }}
+      </div>
+      <div class="billet-info">
+        <span class="billet-label">Places:</span> {{ reservation.nombre_places }}
+      </div>
+    </div>
+
+    <div class="billet-section">
+      <h3>🚐 Bus</h3>
+      <div class="billet-info">
+        <span class="billet-label">Catégorie:</span> {{ depart.bus.categorie.nom }}
+      </div>
+      <div class="billet-info">
+        <span class="billet-label">Immatriculation:</span> {{ depart.bus.immatriculation|default:"Non fourni" }}
+      </div>
+    </div>
+  </div>
+
+  <div class="prix-total">
+    Total: {{ reservation.prix_total }} FCFA
+  </div>
+
+  <div class="qr-section">
+    <h3>Code de Présentation</h3>
+    <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR Code Billet">
+    <p style="margin: 10px 0 0 0; font-size: 12px;">{{ reference }}</p>
+  </div>
+
+  <div class="billet-footer">
+    <p>📋 Veuillez présenter ce billet 15 minutes avant le départ du bus.</p>
+    <p>GareCI • Adjamé • Abidjan • +225 07 00 00</p>
+    <p>Merci d'avoir choisi GareCI!</p>
+  </div>
+
+  <div class="print-button">
+    <button class="btn-print" onclick="window.print()">� Télécharger en PDF</button>
+  </div>
+</div>
+</body>
+</html>

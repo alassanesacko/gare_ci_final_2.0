@@ -1,7 +1,5 @@
 # trips/views.py
-from datetime import datetime
-
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.shortcuts import render
 from django.utils import timezone
 
@@ -9,72 +7,60 @@ from .models import Depart, Trip, Ville
 
 
 def home(request):
-    """Page d'accueil publique (client)."""
+    """Page d'accueil publique (client) avec formulaire de recherche."""
     villes = Ville.objects.order_by("nom")
-    popular_trips = (
-        Trip.objects.filter(actif=True)
-        .select_related("ville_depart", "ville_arrivee")
-        .annotate(reservations_count=Count("departs__reservations"))
-        .order_by("-reservations_count", "price")[:6]
-    )
+    today = timezone.localdate()
     return render(
         request,
         "trips/home.html",
         {
             "villes": villes,
-            "popular_trips": popular_trips,
+            "today": today,
             "active_tab": "home",
         },
     )
 
 
 def search_results(request):
-    ville_depart_query = (request.GET.get("ville_depart") or "").strip()
-    ville_arrivee_query = (request.GET.get("ville_arrivee") or "").strip()
-    date_str = (request.GET.get("date") or "").strip()
-    resultats = []
-    try:
-        date_recherche = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else timezone.localdate()
-    except ValueError:
-        date_recherche = timezone.localdate()
-    date_str = date_recherche.isoformat()
+    ville_depart_nom  = request.GET.get("ville_depart", "").strip()
+    ville_arrivee_nom = request.GET.get("ville_arrivee", "").strip()
+    resultats         = []
+    date_recherche    = timezone.localdate()
 
-    departs = Depart.objects.filter(actif=True)
-    if ville_depart_query:
-        departs = departs.filter(trip__arret_depart__ville__nom__icontains=ville_depart_query)
-    if ville_arrivee_query:
-        departs = departs.filter(trip__arret_arrivee__ville__nom__icontains=ville_arrivee_query)
-
-    departs = (
-        departs.select_related(
+    if ville_depart_nom or ville_arrivee_nom:
+        query = Q(actif=True)
+        
+        if ville_depart_nom:
+            query &= Q(trip__arret_depart__ville__nom__icontains=ville_depart_nom)
+        
+        if ville_arrivee_nom:
+            query &= Q(trip__arret_arrivee__ville__nom__icontains=ville_arrivee_nom)
+        
+        departs = Depart.objects.filter(query).select_related(
             "trip__arret_depart__ville",
             "trip__arret_arrivee__ville",
             "bus__categorie",
-        )
-        .prefetch_related("trip__etapetrajet_set__segment__arret_arrivee__ville")
-        .order_by("heure_depart")
-    )
+        ).order_by("heure_depart")
 
-    for depart in departs:
-        places = depart.places_disponibles_pour(date_recherche)
-        if places > 0:
-            resultats.append(
-                {
+        for depart in departs:
+            places = depart.places_disponibles_pour(date_recherche)
+            if places > 0:
+                resultats.append({
                     "depart": depart,
                     "places": places,
-                }
-            )
+                    "date":   date_recherche,
+                })
 
-    context = {
-        "resultats": resultats,
-        "date_recherche": date_recherche,
-        "date_str": date_str,
-        "ville_depart_query": ville_depart_query,
-        "ville_arrivee_query": ville_arrivee_query,
-        "villes": Ville.objects.all().order_by("nom"),
-        "nb_resultats": len(resultats),
-    }
-    return render(request, "trips/search_results.html", context)
+    return render(request, "trips/search_results.html", {
+        "resultats":        resultats,
+        "date_recherche":   date_recherche,
+        "date_str":         date_recherche.isoformat(),
+        "ville_depart_nom": ville_depart_nom,
+        "ville_arrivee_nom": ville_arrivee_nom,
+        "villes":           Ville.objects.all().order_by("nom"),
+        "nb_resultats":     len(resultats),
+        "today":            timezone.localdate(),
+    })
 
 
 def about(request):

@@ -41,6 +41,8 @@ from .views import (
     depart_delete,
     depart_edit,
     depart_list,
+    reservation_list,
+    admin_voir_billet,
 )
 
 app_name = "dashboard"
@@ -85,4 +87,6 @@ urlpatterns = [
     path("reservations/<int:pk>/edit/", ReservationAdminUpdateView.as_view(), name="reservation_edit"),
     path("reservations/<int:pk>/delete/", ReservationAdminDeleteView.as_view(), name="reservation_delete"),
     path("reservations/<int:pk>/confirm/", ReservationAdminConfirmView.as_view(), name="reservation_confirm"),
+    path('reservations/', reservation_list, name='reservation_list'),
+    path('reservations/<int:reservation_id>/billet/', admin_voir_billet, name='admin_voir_billet'),
 ]

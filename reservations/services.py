@@ -45,13 +45,13 @@ class ReservationService:
             raise ValidationError(f"Maximum {politique.places_max_par_reservation} places par reservation.")
 
         active_statuses = [
-            ReservationStatus.EN_ATTENTE_VALIDATION,
-            ReservationStatus.VALIDEE,
+            ReservationStatus.EN_ATTENTE,
+            ReservationStatus.CONFIRMEE,
             ReservationStatus.CONFIRMEE,
         ]
         reservations_actives = Reservation.objects.filter(
-            user=utilisateur,
-            status__in=[s.value for s in active_statuses],
+            utilisateur=utilisateur,
+            statut__in=[s.value for s in active_statuses],
         ).count()
         if reservations_actives >= politique.reservations_max_par_client:
             raise ValidationError(
@@ -66,21 +66,13 @@ class ReservationService:
 
         prix_total = (Decimal(depart.prix) * Decimal(nombre_places)).quantize(Decimal("0.01"))
 
-        ticket = Ticket.objects.create(
-            bus=depart.bus,
-            user=utilisateur,
-            num_seiges=nombre_places,
-            prix=prix_total,
-        )
-
         reservation = Reservation.objects.create(
             depart=depart,
             date_voyage=date_voyage,
-            user=utilisateur,
-            ticket=ticket,
+            utilisateur=utilisateur,
             nombre_places=nombre_places,
             prix_total=prix_total,
-            expires_at=maintenant + timedelta(minutes=politique.delai_paiement_minutes),
+            statut=ReservationStatus.EN_ATTENTE,
         )
 
         User = get_user_model()

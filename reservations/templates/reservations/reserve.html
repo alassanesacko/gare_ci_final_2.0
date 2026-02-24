@@ -1,126 +1,213 @@
 {% extends 'base.html' %}
-{% block title %}Reservation - GareCI{% endblock %}
+{% block title %}Réservation - GareCI{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-    <div class="auth-card reserve-card">
-        <div class="auth-header">
-            <i class="fas fa-ticket-alt"></i>
-            <h2>Confirmer votre reservation</h2>
-        </div>
+<div class="container">
+    <div class="reserve-card" style="margin: 40px auto;">
+        <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 30px;">
+            <i class="fas fa-ticket-alt"></i> Votre réservation
+        </h2>
 
-        <section class="reservation-details">
-            <h3>Recapitulatif du voyage</h3>
+        <!-- Trip Details Card -->
+        <div class="reservation-details">
+            <h3><i class="fas fa-route"></i> Détails du voyage</h3>
+            <div class="detail-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="detail-label">Date :</span>
+                <span class="detail-value">{{ date_voyage|date:'l d F Y' }}</span>
+            </div>
             <div class="detail-item">
                 <i class="fas fa-route"></i>
                 <span class="detail-label">Trajet :</span>
-                <span class="detail-value">{{ depart.trip.arret_depart.ville.nom }} -> {{ depart.trip.arret_arrivee.ville.nom }}</span>
-            </div>
-            <div class="detail-item">
-                <i class="fas fa-calendar-day"></i>
-                <span class="detail-label">Date :</span>
-                <span class="detail-value">{{ date_voyage|date:"l d F Y" }}</span>
+                <span class="detail-value">{{ depart.trip.arret_depart.ville.nom }} → {{ depart.trip.arret_arrivee.ville.nom }}</span>
             </div>
             <div class="detail-item">
                 <i class="fas fa-clock"></i>
-                <span class="detail-label">Horaire :</span>
-                <span class="detail-value">{{ depart.heure_depart|time:"H:i" }} -> {{ depart.heure_arrivee|time:"H:i" }}</span>
+                <span class="detail-label">Départ :</span>
+                <span class="detail-value">{{ depart.heure_depart|time:'H:i' }}</span>
             </div>
             <div class="detail-item">
-                <i class="fas fa-random"></i>
+                <i class="fas fa-clock"></i>
+                <span class="detail-label">Arrivée :</span>
+                <span class="detail-value">{{ depart.heure_arrivee|time:'H:i' }}</span>
+            </div>
+            <div class="detail-item">
+                <i class="fas fa-bus"></i>
+                <span class="detail-label">Bus :</span>
+                <span class="detail-value">{{ depart.bus.categorie.nom }}</span>
+            </div>
+            <div class="detail-item">
+                <i class="fas fa-concierge-bell"></i>
+                <span class="detail-label">Équipements :</span>
+                <div class="equipements-inline">
+                    {% if depart.bus.categorie.a_climatisation %}
+                        <span><i class="fas fa-snowflake"></i> Climatisation</span>
+                    {% endif %}
+                    {% if depart.bus.categorie.a_wifi %}
+                        <span><i class="fas fa-wifi"></i> WiFi</span>
+                    {% endif %}
+                    {% if depart.bus.categorie.a_prise_usb %}
+                        <span><i class="fas fa-plug"></i> USB</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="detail-item">
+                <i class="fas fa-map-marked-alt"></i>
                 <span class="detail-label">Type :</span>
                 <span class="detail-value">
                     {% if type_trajet == 'Direct' %}
                         Direct
                     {% else %}
-                        Via {{ escales|join:", " }}
+                        Avec escale{{ escales|length|pluralize }} : {{ escales|join:', ' }}
                     {% endif %}
                 </span>
             </div>
             <div class="detail-item">
-                <i class="fas fa-star"></i>
-                <span class="detail-label">Equipements :</span>
-                <span class="detail-value equipements-inline">
-                    {% if depart.bus.categorie and depart.bus.categorie.a_wifi %}<span><i class="fas fa-wifi"></i> Wifi</span>{% endif %}
-                    {% if depart.bus.categorie and depart.bus.categorie.a_climatisation %}<span><i class="fas fa-fan"></i> Clim</span>{% endif %}
-                    {% if depart.bus.categorie and depart.bus.categorie.a_prise_usb %}<span><i class="fas fa-plug"></i> USB</span>{% endif %}
-                    {% if depart.bus.categorie and depart.bus.categorie.a_wc %}<span><i class="fas fa-restroom"></i> WC</span>{% endif %}
-                    {% if depart.bus.categorie and depart.bus.categorie.a_repas %}<span><i class="fas fa-utensils"></i> Repas</span>{% endif %}
-                    {% if not depart.bus.categorie %}<span>Non renseignes</span>{% endif %}
-                </span>
+                <i class="fas fa-chair"></i>
+                <span class="detail-label">Places :</span>
+                <span class="detail-value">{{ places_dispo }} disponible{{ places_dispo|pluralize }}</span>
             </div>
-        </section>
+        </div>
 
-        <form method="post" class="auth-form">
-            {% csrf_token %}
-
-            {% if messages %}
-            <div class="alert alert-error">
-                {% for message in messages %}
-                <p>{{ message }}</p>
-                {% endfor %}
-            </div>
-            {% endif %}
-
-            {% if places_dispo > 0 %}
-            <div class="form-group">
-                <label for="id_nombre_places"><i class="fas fa-users"></i> Nombre de places</label>
-                <select id="id_nombre_places" name="nombre_places" class="form-control" required>
-                    {% for i in "12345"|make_list %}
-                    {% with value=forloop.counter %}
-                    {% if value <= places_dispo %}
-                    <option value="{{ value }}" {% if form.nombre_places.value|stringformat:'s' == value|stringformat:'s' %}selected{% endif %}>{{ value }}</option>
-                    {% endif %}
-                    {% endwith %}
+        <!-- Reservation Form Card -->
+        <div class="reservation-details" style="margin-top: 30px;">
+            <h3><i class="fas fa-shopping-cart"></i> Réservation</h3>
+            {% if form.errors %}
+            <div style="color: #dc3545; background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <strong><i class="fas fa-exclamation-circle"></i> Erreur de formulaire :</strong>
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                        <p style="margin: 5px 0;"><i class="fas fa-times-circle"></i> {{ error }}</p>
                     {% endfor %}
-                </select>
+                {% endif %}
                 {% if form.nombre_places.errors %}
-                <div class="errorlist">{{ form.nombre_places.errors }}</div>
+                    {% for error in form.nombre_places.errors %}
+                        <p style="margin: 5px 0;"><i class="fas fa-times-circle"></i> Nombre de places: {{ error }}</p>
+                    {% endfor %}
                 {% endif %}
             </div>
-
-            <div class="detail-item price">
-                <i class="fas fa-money-bill-wave"></i>
-                <span class="detail-label">Prix total :</span>
-                <span id="prix-total" class="detail-value" data-unit-price="{{ depart.prix|floatformat:2 }}">{{ depart.prix|floatformat:0 }} FCFA</span>
-            </div>
-
-            <p class="reservation-note">Votre demande sera validee par notre equipe avant paiement.</p>
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary btn-block">
-                    <i class="fas fa-check-circle"></i> Confirmer la reservation
-                </button>
-                <a href="{% url 'trips:search_results' %}" class="btn btn-outline btn-block">
-                    <i class="fas fa-arrow-left"></i> Modifier ma recherche
-                </a>
-            </div>
-            {% else %}
-            <div class="alert alert-error">
-                <i class="fas fa-exclamation-circle"></i>
-                Ce depart est complet. Aucune place disponible.
-            </div>
             {% endif %}
-        </form>
+            <form method="post" id="reservation-form">
+                {% csrf_token %}
+                <div class="detail-item">
+                    <i class="fas fa-users"></i>
+                    <span class="detail-label">Nombre de places :</span>
+                    <div style="flex-grow: 1;">
+                        {{ form.nombre_places }}
+                    </div>
+                </div>
+                <div class="detail-item price">
+                    <i class="fas fa-tag"></i>
+                    <span class="detail-label">Prix unitaire :</span>
+                    <span class="detail-value">{{ depart.prix }} FCFA</span>
+                </div>
+                <div class="detail-item price">
+                    <i class="fas fa-calculator"></i>
+                    <span class="detail-label">Total :</span>
+                    <span class="detail-value" id="total">{{ depart.prix }} FCFA</span>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    {% if places_dispo > 0 %}
+                        <button type="submit" class="btn btn-primary btn-payment" id="submit-reservation-btn">
+                            <i class="fas fa-credit-card"></i> Continuer vers le paiement
+                        </button>
+                    {% else %}
+                        <button type="submit" class="btn btn-primary btn-payment btn-payment-disabled" disabled>
+                            <i class="fas fa-credit-card"></i> Continuer vers le paiement
+                        </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{% url 'trips:search_results' %}" class="btn btn-outline change-depart-btn" style="color: var(--primary-color);">
+                <i class="fas fa-arrow-left"></i> Changer de départ
+            </a>
+        </div>
+
+        {% if places_dispo == 0 %}
+        <div class="reservation-note">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Attention :</strong> Ce départ est complet. Vous ne pouvez pas réserver pour le moment.
+        </div>
+        {% endif %}
     </div>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const qtySelect = document.getElementById("id_nombre_places");
-    const totalNode = document.getElementById("prix-total");
-    if (!qtySelect || !totalNode) return;
+// Calcul du prix total en temps réel
+(function() {
+    'use strict';
 
-    const unitPrice = parseFloat(totalNode.dataset.unitPrice || "0") || 0;
+    // Prix unitaire du départ
+    const PRIX_UNITAIRE = {{ depart.prix }};
 
-    function refreshTotal() {
-        const qty = parseInt(qtySelect.value || "1", 10);
-        const total = unitPrice * qty;
-        totalNode.textContent = total.toLocaleString("fr-FR", { maximumFractionDigits: 0 }) + " FCFA";
+    // Fonction pour mettre à jour le total
+    function updateTotalPrice() {
+        const selectPlaces = document.querySelector('select[name="nombre_places"]');
+        const totalElement = document.getElementById('total');
+
+        if (!selectPlaces || !totalElement) {
+            console.error('Éléments non trouvés pour le calcul du prix');
+            return;
+        }
+
+        const nombrePlaces = parseInt(selectPlaces.value) || 1;
+        const total = nombrePlaces * PRIX_UNITAIRE;
+
+        totalElement.textContent = total.toLocaleString('fr-FR') + ' FCFA';
+        console.log(`Prix calculé: ${nombrePlaces} place(s) × ${PRIX_UNITAIRE} FCFA = ${total} FCFA`);
     }
 
-    qtySelect.addEventListener("change", refreshTotal);
-    refreshTotal();
-});
+    // Attendre que le DOM soit chargé
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            initPriceCalculator();
+        });
+    } else {
+        initPriceCalculator();
+    }
+
+    function initPriceCalculator() {
+        const selectPlaces = document.querySelector('select[name="nombre_places"]');
+        const reservationForm = document.getElementById('reservation-form');
+        const submitBtn = document.getElementById('submit-reservation-btn');
+
+        if (selectPlaces) {
+            // Calcul initial
+            updateTotalPrice();
+
+            // Mise à jour à chaque changement
+            selectPlaces.addEventListener('change', updateTotalPrice);
+
+            console.log('Calculateur de prix initialisé');
+        } else {
+            console.error('Select nombre_places non trouvé');
+        }
+
+        // Gestion de la soumission du formulaire
+        if (reservationForm) {
+            reservationForm.addEventListener('submit', function(e) {
+                const nombrePlaces = selectPlaces ? parseInt(selectPlaces.value) : 1;
+                console.log('Soumission du formulaire de réservation');
+                console.log('Nombre de places:', nombrePlaces);
+                console.log('Données du formulaire:', new FormData(reservationForm));
+            });
+        }
+
+        // Ajouter un listener au bouton submit pour le débogage
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function(e) {
+                console.log('Bouton submit cliqué');
+                console.log('Formulaire valide:', reservationForm.checkValidity());
+            });
+        }
+    }
+
+    // Exposer la fonction globalement si besoin
+    window.updateTotalPrice = updateTotalPrice;
+})();
 </script>
 {% endblock %}

@@ -100,3 +100,38 @@
         margin-bottom: 5px;
     }
 }
+
+/* ===== RESERVATION FORM STYLES ===== */
+.change-depart-btn:hover {
+    color: white !important;
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #ccc !important;
+    border-color: #ccc !important;
+    color: #666 !important;
+}
+
+.btn:disabled:hover {
+    background-color: #ccc !important;
+    border-color: #ccc !important;
+    color: #666 !important;
+    transform: none !important;
+}
+
+/* Payment button styles */
+.btn-payment {
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.btn-payment-disabled {
+    pointer-events: none;
+    opacity: 0.6;
+}

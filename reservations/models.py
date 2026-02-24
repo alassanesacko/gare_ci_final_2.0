@@ -12,6 +12,7 @@ from django.utils import timezone
 from trips.models import Bus, Depart
 
 
+
 class ReservationStatus(models.TextChoices):
     EN_ATTENTE = "EN_ATTENTE", "En attente"
     CONFIRMEE = "CONFIRMEE", "Confirmee"
@@ -28,24 +29,22 @@ class ContactMessage(models.Model):
 
 
 class Reservation(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    utilisateur = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     depart = models.ForeignKey(
         Depart,
         on_delete=models.CASCADE,
         related_name="reservations",
     )
     date_voyage = models.DateField(help_text="Date choisie par le client pour voyager")
-    ticket = models.ForeignKey("Ticket", on_delete=models.CASCADE)
-    status = models.CharField(
-        max_length=25,
-        choices=ReservationStatus.choices,
-        default=ReservationStatus.EN_ATTENTE,
-    )
-    booked_at = models.DateTimeField(auto_now_add=True)
-    seat_number = models.CharField(max_length=10, blank=True, null=True, verbose_name="Numero de siege")
     reference = models.CharField(max_length=12, unique=True, blank=True)
     nombre_places = models.PositiveSmallIntegerField(default=1)
     prix_total = models.DecimalField(max_digits=10, decimal_places=2)
+    statut = models.CharField(
+        max_length=20,
+        choices=ReservationStatus.choices,
+        default=ReservationStatus.EN_ATTENTE,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Reservation #{self.id} - {self.depart}"
@@ -65,7 +64,6 @@ class Reservation(models.Model):
     @property
     def datetime_depart(self):
         from datetime import datetime
-
         return timezone.make_aware(datetime.combine(self.date_voyage, self.depart.heure_depart))
 
     def save(self, *args, **kwargs):
@@ -77,12 +75,12 @@ class Reservation(models.Model):
         return "".join(random.choices(string.ascii_uppercase + string.digits, k=12))
 
     def confirmer(self):
-        self.status = ReservationStatus.CONFIRMEE
-        self.save()
+        self.statut = ReservationStatus.CONFIRMEE
+        self.save(update_fields=["statut"])
 
     def annuler(self):
-        self.status = ReservationStatus.ANNULEE
-        self.save()
+        self.statut = ReservationStatus.ANNULEE
+        self.save(update_fields=["statut"])
 
 
 class Ticket(models.Model):

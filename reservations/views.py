@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.utils import timezone
 
 from django.conf import settings
 from django.contrib import messages
@@ -14,24 +15,23 @@ from trips.models import Depart
 from .forms import ReservationForm
 from .models import ContactMessage, Paiement, Reservation, ReservationStatus
 from .services import ReservationService
-from .ticket import generate_ticket_pdf
 
 
 @login_required
 def reservation_list(request):
     statut = request.GET.get("statut", "").strip().upper()
-    reservations = Reservation.objects.filter(user=request.user).select_related(
+    reservations = Reservation.objects.filter(utilisateur=request.user).select_related(
         "depart",
         "depart__trip",
         "depart__bus",
     )
     allowed_filters = {
         ReservationStatus.CONFIRMEE,
-        ReservationStatus.EN_ATTENTE_VALIDATION,
+        ReservationStatus.EN_ATTENTE,
         ReservationStatus.ANNULEE,
     }
     if statut in allowed_filters:
-        reservations = reservations.filter(status=statut)
+        reservations = reservations.filter(statut=statut)
 
     return render(
         request,
@@ -63,6 +63,10 @@ def reserve(request, depart_id, date_str):
     except ValueError as exc:
         raise Http404 from exc
 
+    if date_voyage < timezone.now().date():
+        messages.error(request, "Cette date est déjà passée.")
+        return redirect("search_results")
+
     places_dispo = depart.places_disponibles_pour(date_voyage)
 
     if request.method == "POST":
@@ -75,9 +79,10 @@ def reserve(request, depart_id, date_str):
                     utilisateur=request.user,
                     nombre_places=form.cleaned_data["nombre_places"],
                 )
-                return redirect("reservations:attente_validation", reservation_id=reservation.id)
-            except ValidationError as exc:
-                messages.error(request, "; ".join(exc.messages))
+                return redirect("reservations:paiement", reservation_id=reservation.id)
+            except ValidationError as e:
+                messages.error(request, str(e))
+                form.add_error(None, str(e))
     else:
         form = ReservationForm(places_disponibles=places_dispo)
 
@@ -109,21 +114,20 @@ def reserve(request, depart_id, date_str):
 
 @login_required
 def attente_validation(request, reservation_id):
-    reservation = get_object_or_404(Reservation, id=reservation_id, user=request.user)
+    reservation = get_object_or_404(Reservation, id=reservation_id, utilisateur=request.user)
     return render(request, "reservations/attente_validation.html", {"reservation": reservation})
 
 
 @login_required
 @require_POST
 def annuler_reservation(request, reservation_id):
-    reservation = get_object_or_404(Reservation, id=reservation_id, user=request.user)
-    if reservation.status == ReservationStatus.CONFIRMEE:
-        reservation.annuler()
-    statut = request.GET.get("statut", "").strip()
-    redirect_url = "reservations:list"
-    if statut:
-        return redirect(f"{redirect_url}?statut={statut}")
-    return redirect(redirect_url)
+    reservation = get_object_or_404(
+        Reservation,
+        id=reservation_id,
+        utilisateur=request.user,
+    )
+    reservation.annuler()
+    return redirect("reservations:list")
 
 
 @login_required
@@ -145,82 +149,78 @@ def delete_message(request, pk):
 
 
 @login_required
-def telecharger_billet(request, pk):
-    reservation = get_object_or_404(Reservation.objects.select_related("user"), pk=pk)
-
-    if reservation.user != request.user:
-        return HttpResponse(status=403)
-
-    if reservation.status != ReservationStatus.CONFIRMEE:
-        return HttpResponse(status=400)
-
-    pdf_buffer = generate_ticket_pdf(reservation)
-    filename_ref = reservation.reference or f"RES-{reservation.id}"
-    response = HttpResponse(pdf_buffer.getvalue(), content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="billet_{filename_ref}.pdf"'
-    return response
+def telecharger_billet(request, reservation_id):
+    reservation = get_object_or_404(
+        Reservation,
+        id=reservation_id,
+        utilisateur=request.user,
+        statut=ReservationStatus.CONFIRMEE,
+    )
+    from .ticket import get_ticket_context
+    
+    context = get_ticket_context(reservation)
+    return render(request, "reservations/billet.html", context)
 
 
 @login_required
 def paiement(request, reservation_id):
-    reservation = get_object_or_404(Reservation, id=reservation_id, user=request.user)
-
-    if reservation.status == ReservationStatus.EN_ATTENTE_VALIDATION:
-        return render(request, "reservations/attente_validation.html", {"reservation": reservation})
-
-    if reservation.status == ReservationStatus.REJETEE:
-        return render(request, "reservations/reservation_rejetee.html", {"reservation": reservation})
-
-    if reservation.status == ReservationStatus.EXPIREE:
-        return render(request, "reservations/paiement_expire.html", {"reservation": reservation})
-
-    if reservation.status == ReservationStatus.VALIDEE:
-        paiement_obj, _ = Paiement.objects.get_or_create(
-            reservation=reservation,
-            defaults={"montant": reservation.prix_total},
-        )
-        return render(
-            request,
-            "reservations/paiement.html",
-            {"reservation": reservation, "paiement": paiement_obj},
-        )
-
-    return redirect("reservations:list")
+    reservation = get_object_or_404(
+        Reservation,
+        id=reservation_id,
+        utilisateur=request.user,
+        statut=ReservationStatus.EN_ATTENTE,
+    )
+    paiement_obj, _ = Paiement.objects.get_or_create(
+        reservation=reservation,
+        defaults={
+            "montant": reservation.prix_total,
+            "statut": Paiement.Statut.EN_ATTENTE,
+        },
+    )
+    return render(request, "reservations/paiement.html", {"reservation": reservation, "paiement": paiement_obj})
 
 
 @login_required
 @require_POST
 def traiter_paiement(request, reservation_id):
-    reservation = get_object_or_404(Reservation, id=reservation_id, user=request.user)
-    try:
-        paiement_obj = reservation.paiement
-    except Paiement.DoesNotExist:
-        return HttpResponse(status=404)
-
-    if getattr(reservation, "est_expiree", False):
-        return redirect("reservations:paiement_echec")
-
+    reservation = get_object_or_404(
+        Reservation,
+        id=reservation_id,
+        utilisateur=request.user,
+        statut=ReservationStatus.EN_ATTENTE,
+    )
+    paiement_obj = get_object_or_404(Paiement, reservation=reservation)
     action = request.POST.get("action")
     if action == "payer":
         paiement_obj.statut = Paiement.Statut.REUSSI
-        paiement_obj.save()
+        paiement_obj.save(update_fields=["statut"])
         reservation.confirmer()
-        return redirect("reservations:paiement_succes")
-    if action == "echouer":
+        return redirect("reservations:paiement_succes", reservation_id=reservation.id)
+    elif action == "echouer":
         paiement_obj.statut = Paiement.Statut.ECHOUE
-        paiement_obj.save()
-        return redirect("reservations:paiement_echec")
-    return HttpResponse(status=400)
+        paiement_obj.save(update_fields=["statut"])
+        messages.error(request, "Paiement échoué. Veuillez réessayer.")
+        return redirect("reservations:paiement", reservation_id=reservation.id)
+    return redirect("reservations:list")
 
 
-def paiement_succes(request):
-    return render(request, "reservations/paiement_succes.html")
+@login_required
+def paiement_succes(request, reservation_id):
+    reservation = get_object_or_404(
+        Reservation,
+        id=reservation_id,
+        utilisateur=request.user,
+        statut=ReservationStatus.CONFIRMEE,
+    )
+    return render(request, "reservations/paiement_succes.html", {"reservation": reservation})
 
 
+@login_required
 def paiement_echec(request):
     return render(request, "reservations/paiement_echec.html")
 
 
+@login_required
 def contact(request):
     if request.user.is_authenticated:
         default_name = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username

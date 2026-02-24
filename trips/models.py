@@ -170,9 +170,9 @@ class Depart(models.Model):
             Reservation.objects.filter(
                 depart=self,
                 date_voyage=date,
-                status__in=[
-                    ReservationStatus.EN_ATTENTE_VALIDATION,
-                    ReservationStatus.VALIDEE,
+                statut__in=[
+                    ReservationStatus.EN_ATTENTE,
+                    ReservationStatus.CONFIRMEE,
                     ReservationStatus.CONFIRMEE,
                 ],
             ).aggregate(total=Sum("nombre_places"))["total"]

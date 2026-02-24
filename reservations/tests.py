@@ -88,20 +88,19 @@ class ReservationTests(TestCase):
         self,
         *,
         user=None,
-        status=ReservationStatus.EN_ATTENTE_VALIDATION,
+        status=ReservationStatus.EN_ATTENTE,
         nombre_places=1,
         expires_at=None,
         departure=None,
         prix_total=Decimal('10000.00'),
     ):
         return Reservation.objects.create(
-            user=user or self.user,
-            departure=departure or self.departure,
-            ticket=self._create_ticket(user=user or self.user, num_seiges=nombre_places, prix=prix_total),
-            status=status,
+            utilisateur=user or self.user,
+            depart=departure or self.departure,
+            date_voyage=timezone.localdate(),
+            statut=status,
             nombre_places=nombre_places,
             prix_total=prix_total,
-            expires_at=expires_at if expires_at is not None else timezone.now() + timedelta(minutes=30),
         )
 
     # TESTS ReservationService.creer()
@@ -113,7 +112,7 @@ class ReservationTests(TestCase):
         )
 
         self.assertTrue(Reservation.objects.filter(id=reservation.id).exists())
-        self.assertEqual(reservation.status, ReservationStatus.EN_ATTENTE_VALIDATION)
+        self.assertEqual(reservation.statut, ReservationStatus.EN_ATTENTE)
         self.assertEqual(reservation.nombre_places, 2)
         self.assertEqual(reservation.prix_total, self.departure.trip.price * 2)
 
@@ -174,9 +173,9 @@ class ReservationTests(TestCase):
         self.assertEqual(Reservation.objects.count(), 0)
 
     def test_trop_de_reservations_actives(self):
-        self._create_reservation(status=ReservationStatus.VALIDEE)
         self._create_reservation(status=ReservationStatus.CONFIRMEE)
-        self._create_reservation(status=ReservationStatus.EN_ATTENTE_VALIDATION)
+        self._create_reservation(status=ReservationStatus.CONFIRMEE)
+        self._create_reservation(status=ReservationStatus.EN_ATTENTE)
         initial_count = Reservation.objects.count()
 
         with self.assertRaises(ValidationError):
@@ -223,7 +222,7 @@ class ReservationTests(TestCase):
     # TESTS Paiement simulé
     def test_paiement_reussi(self):
         reservation = self._create_reservation(
-            status=ReservationStatus.VALIDEE,
+            status=ReservationStatus.CONFIRMEE,
             expires_at=timezone.now() + timedelta(hours=1),
             prix_total=Decimal('20000.00'),
             nombre_places=2,
@@ -243,12 +242,12 @@ class ReservationTests(TestCase):
         paiement.refresh_from_db()
         reservation.refresh_from_db()
         self.assertEqual(paiement.statut, Paiement.Statut.REUSSI)
-        self.assertEqual(reservation.status, ReservationStatus.CONFIRMEE)
+        self.assertEqual(reservation.statut, ReservationStatus.CONFIRMEE)
         self.assertRedirects(response, reverse('reservations:paiement_succes'))
 
     def test_paiement_echec(self):
         reservation = self._create_reservation(
-            status=ReservationStatus.VALIDEE,
+            status=ReservationStatus.CONFIRMEE,
             expires_at=timezone.now() + timedelta(hours=1),
         )
         paiement = Paiement.objects.create(
@@ -266,11 +265,11 @@ class ReservationTests(TestCase):
         paiement.refresh_from_db()
         reservation.refresh_from_db()
         self.assertEqual(paiement.statut, Paiement.Statut.ECHOUE)
-        self.assertEqual(reservation.status, ReservationStatus.VALIDEE)
+        self.assertEqual(reservation.status, ReservationStatus.CONFIRMEE)
         self.assertRedirects(response, reverse('reservations:paiement_echec'))
 
     def test_paiement_reservation_non_validee(self):
-        reservation = self._create_reservation(status=ReservationStatus.EN_ATTENTE_VALIDATION)
+        reservation = self._create_reservation(status=ReservationStatus.EN_ATTENTE)
 
         self.client.login(username='testuser', password='test123')
         response = self.client.get(reverse('reservations:paiement', args=[reservation.id]))
@@ -281,7 +280,7 @@ class ReservationTests(TestCase):
 
     def test_paiement_expire(self):
         reservation = self._create_reservation(
-            status=ReservationStatus.VALIDEE,
+            status=ReservationStatus.CONFIRMEE,
             expires_at=timezone.now() - timedelta(hours=1),
         )
         Paiement.objects.create(
@@ -316,7 +315,7 @@ class ReservationTests(TestCase):
             password='test123',
             email='userb@example.com',
         )
-        reservation = self._create_reservation(user=user_a, status=ReservationStatus.VALIDEE)
+        reservation = self._create_reservation(user=user_a, status=ReservationStatus.CONFIRMEE)
 
         self.client.login(username='user_b', password='test123')
         response = self.client.get(reverse('reservations:paiement', args=[reservation.id]))
@@ -391,21 +390,21 @@ class ReservationTests(TestCase):
             is_staff=True,
         )
         reservation = self._create_reservation(
-            status=ReservationStatus.EN_ATTENTE_VALIDATION,
+            status=ReservationStatus.EN_ATTENTE,
             expires_at=timezone.now() + timedelta(minutes=30),
         )
 
         reservation.valider(admin_user)
         reservation.refresh_from_db()
 
-        self.assertEqual(reservation.status, ReservationStatus.VALIDEE)
+        self.assertEqual(reservation.status, ReservationStatus.CONFIRMEE)
         self.assertEqual(reservation.validee_par, admin_user)
         self.assertIsNotNone(reservation.validee_at)
         self.assertGreater(reservation.expires_at, timezone.now())
 
     def test_rejeter(self):
         reservation = self._create_reservation(
-            status=ReservationStatus.EN_ATTENTE_VALIDATION,
+            status=ReservationStatus.EN_ATTENTE,
             nombre_places=3,
             expires_at=timezone.now() + timedelta(minutes=30),
         )
@@ -421,7 +420,7 @@ class ReservationTests(TestCase):
         reservation.refresh_from_db()
         self.departure.refresh_from_db()
 
-        self.assertEqual(reservation.status, ReservationStatus.REJETEE)
+        self.assertEqual(reservation.statut, ReservationStatus.EN_ATTENTE)
         self.assertEqual(reservation.motif_rejet, 'Bus complet')
         self.assertEqual(self.departure.places_disponibles, 10)
 
@@ -440,9 +439,9 @@ class ReservationTests(TestCase):
         self.assertEqual(reservation.status, ReservationStatus.ANNULEE)
         self.assertEqual(self.departure.places_disponibles, 10)
 
-    def test_annuler_en_attente_validation(self):
+    def test_annuler_en_attente(self):
         reservation = self._create_reservation(
-            status=ReservationStatus.EN_ATTENTE_VALIDATION,
+            status=ReservationStatus.EN_ATTENTE,
             nombre_places=2,
         )
         initial_places = self.departure.places_disponibles
@@ -483,7 +482,7 @@ class ReservationTests(TestCase):
             )
             reservation = self._create_reservation(
                 user=user,
-                status=ReservationStatus.EN_ATTENTE_VALIDATION,
+                status=ReservationStatus.EN_ATTENTE,
             )
             references.add(reservation.reference)
             self.assertEqual(len(reservation.reference), 12)

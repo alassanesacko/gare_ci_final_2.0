@@ -5,13 +5,13 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
-
-from trips.models import Arret, Bus, Category, Depart, Segment, Trip, Ville
-from .models import Conducteur
 from reservations.models import ContactMessage, Reservation, ReservationStatus
+from django.http import HttpResponse
+from .models import Conducteur
 from gareci_admin.utils import StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin 
 from .forms import ArretForm, ContactReplyForm, DepartForm, EtapeTrajetFormSet, SegmentForm, TripAdminForm, VilleForm
 from django.contrib.auth import get_user_model
+from trips.models import Bus, Category, Ville, Arret, Segment, Trip, Depart
 
 
 class CreateSuccessMessageMixin:
@@ -495,11 +495,11 @@ class ReservationAdminListView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixi
     active_tab_value ='reservations'
     breadcrumb_title = 'Reservations '
     context_object_name = 'reservations'
-    ordering = ['-booked_at']
+    ordering = ['-created_at']
 
 class ReservationAdminUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin, UpdateSuccessMessageMixin, UpdateView):
     model = Reservation
-    fields = ['status']
+    fields = ['statut', 'utilisateur', 'date_voyage', 'depart', 'nombre_places', 'prix_total', 'paiement']
     template_name = 'dashboard/reservation_form.html'
     active_tab_value ='reservations'
     breadcrumb_title = 'Reservations > Modifier Reservations'
@@ -518,7 +518,7 @@ class ReservationAdminConfirmView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbM
     active_tab_value ='departures'
     def post(self, request, pk, *args, **kwargs):
         reservation = get_object_or_404(Reservation, pk=pk)
-        reservation.status = ReservationStatus.CONFIRMEE
+        reservation.statut = ReservationStatus.CONFIRMEE
         reservation.save()
         return redirect('dashboard:reservation_list')
 
@@ -551,12 +551,12 @@ class DashboardView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , Templat
         context['object_list'] = Depart.objects.select_related('trip', 'bus').all().order_by('heure_depart')
         # Reservations recentes (10 dernieres)
         recent_reservations = Reservation.objects.select_related(
-            'user',
+            'utilisateur',
             'depart__trip',
             'depart__bus'
         ).filter(
-            status__in=[ReservationStatus.EN_ATTENTE_VALIDATION, ReservationStatus.VALIDEE, ReservationStatus.CONFIRMEE]  # Uniquement les reservations actives
-        ).order_by('-booked_at')[:10]
+            statut__in=[ReservationStatus.EN_ATTENTE, ReservationStatus.CONFIRMEE]  # Uniquement les reservations actives
+        ).order_by('-created_at')[:10]
         context['recent_reservations'] = recent_reservations
         # Messages recents (5 derniers sans reponse)
         recent_messages = ContactMessage.objects.filter(
@@ -568,3 +568,63 @@ class DashboardView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , Templat
 def user_list(request):
     # Logique pour afficher la liste des utilisateurs
     return render(request, 'gareci_admin/user_list.html')
+
+@staff_member_required
+def reservation_list(request):
+    reservations = Reservation.objects.filter(
+        statut__in=[
+            ReservationStatus.EN_ATTENTE,
+            ReservationStatus.CONFIRMEE,
+        ]
+    ).select_related(
+        'depart__trip__arret_depart__ville',
+        'depart__trip__arret_arrivee__ville',
+        'depart__bus__categorie',
+        'utilisateur',
+    ).order_by('date_voyage', 'depart__heure_depart')
+
+    reservations_par_date = {}
+    for resa in reservations:
+        date = resa.date_voyage
+        if date not in reservations_par_date:
+            reservations_par_date[date] = []
+        reservations_par_date[date].append(resa)
+
+    contexte_dates = []
+    for date in sorted(reservations_par_date.keys()):
+        resas = reservations_par_date[date]
+        contexte_dates.append({
+            'date':          date,
+            'reservations':  resas,
+            'nb_confirmees': sum(
+                1 for r in resas
+                if r.statut == ReservationStatus.CONFIRMEE
+            ),
+            'nb_en_attente': sum(
+                1 for r in resas
+                if r.statut == ReservationStatus.EN_ATTENTE
+            ),
+            'recettes':      sum(
+                r.prix_total for r in resas
+                if r.statut == ReservationStatus.CONFIRMEE
+            ),
+        })
+
+    return render(request, 'dashboard/reservation_list.html', {
+        'dates': contexte_dates,
+    })
+
+@staff_member_required
+def admin_voir_billet(request, reservation_id):
+    from reservations.ticket import generer_billet_pdf
+    reservation = get_object_or_404(
+        Reservation,
+        id=reservation_id,
+        statut=ReservationStatus.CONFIRMEE
+    )
+    pdf_bytes = generer_billet_pdf(reservation)
+    response  = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = (
+        f'inline; filename="billet_{reservation.reference}.pdf"'
+    )
+    return response

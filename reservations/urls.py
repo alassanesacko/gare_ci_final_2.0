@@ -13,10 +13,10 @@ urlpatterns = [
     path('messages/', message_list, name='messages'),
     path('contact/', contact, name='contact'),
     path('messages/delete/<int:pk>/', delete_message, name='delete_message'),
-    path('download/<int:pk>/', telecharger_billet, name='download_ticket'),
-    path('billet/<int:pk>/', telecharger_billet, name='telecharger_billet'),
+    path('download/<int:reservation_id>/', telecharger_billet, name='download_ticket'),
+    path('billet/<int:reservation_id>/', telecharger_billet, name='telecharger_billet'),
     path('paiement/<int:reservation_id>/', paiement, name='paiement'),
     path('paiement/<int:reservation_id>/traiter/', traiter_paiement, name='traiter_paiement'),
-    path('paiement/succes/', paiement_succes, name='paiement_succes'),
+    path('paiement/<int:reservation_id>/succes/', paiement_succes, name='paiement_succes'),
     path('paiement/echec/', paiement_echec, name='paiement_echec'),
 ]
