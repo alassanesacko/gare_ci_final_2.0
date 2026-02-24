@@ -22,14 +22,16 @@
             <div class="header-content">
                 <div class="logo">
                     <a href="{% url 'trips:home' %}">
-                        <i class="fas fa-bus"></i>
+                        <span class="logo-bus-animated">
+                            <i class="fas fa-bus"></i>
+                            <span class="bus-headlight"></span>
+                        </span>
                         <h1>Gare<span>CI</span></h1>
                     </a>
                 </div>
 
                 <nav class="main-nav">
                     <a href="{% url 'trips:home' %}" class="nav-link {% if active_tab == 'home' %}active{% endif %}">Accueil</a>
-                    <a href="{% url 'trips:about' %}" class="nav-link {% if active_tab == 'about' %}active{% endif %}">A propos</a>
                     {% if user.is_authenticated %}
                         {% if user.is_staff %}
                             <a href="{% url 'dashboard:index' %}" class="nav-link">Tableau de bord</a>
@@ -38,7 +40,9 @@
                             <a href="{% url 'accounts:profile' %}" class="nav-link {% if active_tab == 'profile' %}active{% endif %}">Mon profil</a>
                         {% endif %}
                     {% endif %}
-                    <a href="{% url 'accounts:contact' %}" class="nav-link {% if active_tab == 'contact' %}active{% endif %}">Contact</a>
+                    <a href="{% url 'accounts:contact' %}" class="nav-link {% if active_tab == 'contact' %}active{% endif %}">Contacts</a>
+                    <a href="{% url 'trips:about' %}" class="nav-link {% if active_tab == 'about' %}active{% endif %}">A propos</a>
+
                 </nav>
 
                 <div class="auth-buttons">

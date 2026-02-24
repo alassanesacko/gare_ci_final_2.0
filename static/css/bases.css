@@ -1,3 +1,33 @@
+/* Animation phare bus logo header */
+.logo-bus-animated {
+    position: relative;
+    display: inline-block;
+}
+.logo-bus-animated .fa-bus {
+    position: relative;
+    z-index: 2;
+    color: #FF6B00;
+    font-size: 2.1rem;
+    filter: drop-shadow(0 0 2px #ffb98a);
+}
+.logo-bus-animated .bus-headlight {
+    position: absolute;
+    right: -7px;
+    bottom: 2px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fffbe6 60%, #FF6B00 100%);
+    box-shadow: 0 0 18px 6px #ffb98a, 0 0 0 0 #fffbe6;
+    opacity: 0.85;
+    animation: bus-headlight-blink 1.2s infinite alternate;
+    z-index: 1;
+}
+@keyframes bus-headlight-blink {
+    0% { opacity: 0.3; box-shadow: 0 0 8px 2px #ffb98a, 0 0 0 0 #fffbe6; }
+    60% { opacity: 1; box-shadow: 0 0 18px 7px #ffb98a, 0 0 0 0 #fffbe6; }
+    100% { opacity: 0.5; box-shadow: 0 0 8px 2px #ffb98a, 0 0 0 0 #fffbe6; }
+}
 /* VARIABLES */
 :root {
     --primary-color: #FF6B00;

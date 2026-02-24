@@ -2,65 +2,35 @@
 {% block title %}Paiement - {{ reservation.reference }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="reserve-card" style="margin: 40px auto;">
-        <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 30px;">
-            <i class="fas fa-credit-card"></i> Paiement de la réservation
-        </h2>
-
-        <!-- Reservation Recap Card -->
-        <div class="reservation-details">
-            <h3><i class="fas fa-receipt"></i> Récapitulatif de la réservation</h3>
-            <div class="detail-item">
-                <i class="fas fa-hashtag"></i>
-                <span class="detail-label">Référence :</span>
-                <span class="detail-value">{{ reservation.reference }}</span>
-            </div>
-            <div class="detail-item">
-                <i class="fas fa-calendar-alt"></i>
-                <span class="detail-label">Date voyage :</span>
-                <span class="detail-value">{{ reservation.date_voyage|date:'l d F Y' }}</span>
-            </div>
-            <div class="detail-item">
-                <i class="fas fa-route"></i>
-                <span class="detail-label">Trajet :</span>
-                <span class="detail-value">{{ reservation.depart.trip.arret_depart.ville.nom }} → {{ reservation.depart.trip.arret_arrivee.ville.nom }}</span>
-            </div>
-            <div class="detail-item">
-                <i class="fas fa-clock"></i>
-                <span class="detail-label">Départ :</span>
-                <span class="detail-value">{{ reservation.heure_depart|time:'H:i' }} → {{ reservation.heure_arrivee|time:'H:i' }}</span>
-            </div>
-            <div class="detail-item">
-                <i class="fas fa-users"></i>
-                <span class="detail-label">Places :</span>
-                <span class="detail-value">{{ reservation.nombre_places }}</span>
-            </div>
-            <div class="detail-item price">
-                <i class="fas fa-calculator"></i>
-                <span class="detail-label">Total :</span>
-                <span class="detail-value">{{ reservation.prix_total }} FCFA</span>
+<div class="paiement-modern-container">
+    <div class="paiement-modern-card">
+        <div class="paiement-modern-header">
+            <i class="fas fa-credit-card"></i>
+            <h2>Paiement de la réservation</h2>
+        </div>
+        <div class="paiement-modern-recap">
+            <h3><i class="fas fa-receipt"></i> Récapitulatif</h3>
+            <div class="paiement-modern-recap-grid">
+                <div class="recap-item"><span><i class="fas fa-hashtag"></i> Référence</span><strong>{{ reservation.reference }}</strong></div>
+                <div class="recap-item"><span><i class="fas fa-calendar-alt"></i> Date voyage</span><strong>{{ reservation.date_voyage|date:'l d F Y' }}</strong></div>
+                <div class="recap-item"><span><i class="fas fa-route"></i> Trajet</span><strong>{{ reservation.depart.trip.arret_depart.ville.nom }} → {{ reservation.depart.trip.arret_arrivee.ville.nom }}</strong></div>
+                <div class="recap-item"><span><i class="fas fa-clock"></i> Départ</span><strong>{{ reservation.heure_depart|time:'H:i' }} → {{ reservation.heure_arrivee|time:'H:i' }}</strong></div>
+                <div class="recap-item"><span><i class="fas fa-users"></i> Places</span><strong>{{ reservation.nombre_places }}</strong></div>
+                <div class="recap-item recap-total"><span><i class="fas fa-calculator"></i> Total</span><strong>{{ reservation.prix_total }} FCFA</strong></div>
             </div>
         </div>
-
-        <!-- Payment Options Card -->
-        <div class="reservation-details" style="margin-top: 30px;">
-       
-            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
-                <form method="POST" action="{% url 'reservations:traiter_paiement' reservation.id %}" style="flex: 1; min-width: 200px;">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="payer">
-                    <button type="submit" class="btn btn-primary btn-payment" style="width: 100%;">
-                        <i class="fas fa-check-circle"></i> Payer {{ reservation.prix_total }} FCFA
-                    </button>
-                </form>
-
-                <div style="flex: 1; min-width: 200px;">
-                    <a href="{% url 'reservations:annuler' reservation.id %}" class="btn btn-outline" style="width: 100%; color: #dc3545; border-color: #dc3545; display: inline-block; text-align: center; padding: 12px 28px;">
-                        <i class="fas fa-times"></i> Annuler la réservation
-                    </a>
-                </div>
-            </div>
+        <div class="paiement-modern-actions">
+            <form method="POST" action="{% url 'reservations:traiter_paiement' reservation.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="payer">
+                <button type="submit" class="btn btn-primary paiement-modern-btn">
+                    <i class="fas fa-check-circle"></i> Payer {{ reservation.prix_total }} FCFA
+                </button>
+            </form>
+            <a href="{% url 'reservations:annuler' reservation.id %}" class="btn btn-outline paiement-modern-btn paiement-modern-btn-cancel">
+                <i class="fas fa-times"></i> Annuler la réservation
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

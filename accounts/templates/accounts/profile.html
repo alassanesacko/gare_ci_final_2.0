@@ -2,11 +2,20 @@
 {% block title %}Mon profil{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-    <div class="auth-card" style="max-width: 980px; width: 100%;">
-        <div class="auth-header">
-            <i class="fas fa-user-circle"></i>
-            <h2>Mon profil</h2>
+
+<div class="profile-modern-container">
+    <div class="profile-modern-card">
+        <div class="profile-modern-header">
+            <div class="profile-modern-avatar">
+                <i class="fas fa-user-circle"></i>
+                <span class="profile-modern-initial">{{ request.user.username|slice:":1"|upper }}</span>
+            </div>
+            <div class="profile-modern-header-info">
+                <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
+                <div class="profile-modern-meta"><i class="fas fa-envelope"></i> {{ request.user.email|default:"-" }}</div>
+                <div class="profile-modern-meta"><i class="fas fa-phone"></i> {{ request.user.phone|default:"-" }}</div>
+                <div class="profile-modern-meta"><i class="fas fa-calendar-alt"></i> Inscrit le {{ request.user.date_joined|date:"d/m/Y" }}</div>
+            </div>
         </div>
 
         {% if messages %}
@@ -18,83 +27,76 @@
             {% endfor %}
         {% endif %}
 
-        <section style="display:flex; gap:20px; align-items:center; background:#f8f9fa; border-radius:10px; padding:18px; margin-bottom:20px;">
-            <div style="width:78px; height:78px; border-radius:50%; background:#ff6b00; color:#fff; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:700;">
-                {{ request.user.username|slice:":1"|upper }}
+        <div class="profile-modern-stats">
+            <div class="profile-modern-stat profile-modern-stat-voyages">
+                <div class="profile-modern-stat-label"><i class="fas fa-bus"></i> Voyages effectués</div>
+                <div class="profile-modern-stat-value">{{ nb_voyages }}</div>
             </div>
-            <div>
-                <h3 style="margin:0 0 8px;">{{ request.user.get_full_name|default:request.user.username }}</h3>
-                <p style="margin:2px 0;"><strong>Email :</strong> {{ request.user.email|default:"-" }}</p>
-                <p style="margin:2px 0;"><strong>Telephone :</strong> {{ request.user.phone|default:"-" }}</p>
-                <p style="margin:2px 0;"><strong>Inscrit le :</strong> {{ request.user.date_joined|date:"d/m/Y" }}</p>
+            <div class="profile-modern-stat profile-modern-stat-depense">
+                <div class="profile-modern-stat-label"><i class="fas fa-wallet"></i> Total dépensé</div>
+                <div class="profile-modern-stat-value">{{ total_depense|floatformat:0 }} FCFA</div>
             </div>
-        </section>
+            <div class="profile-modern-stat profile-modern-stat-villes">
+                <div class="profile-modern-stat-label"><i class="fas fa-map-marker-alt"></i> Villes visitées</div>
+                <div class="profile-modern-stat-value">{{ nb_villes }}</div>
+            </div>
+        </div>
 
-        <section style="display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; margin-bottom:20px;">
-            <div style="background:#fff7f1; border:1px solid #ffd8bf; border-radius:10px; padding:14px;">
-                <div style="font-size:0.85rem; color:#777;">Voyages effectues</div>
-                <div style="font-size:1.5rem; font-weight:700;">{{ nb_voyages }}</div>
-            </div>
-            <div style="background:#f3fff7; border:1px solid #ccefd8; border-radius:10px; padding:14px;">
-                <div style="font-size:0.85rem; color:#777;">Total depense</div>
-                <div style="font-size:1.5rem; font-weight:700;">{{ total_depense|floatformat:0 }} FCFA</div>
-            </div>
-            <div style="background:#f3f8ff; border:1px solid #d5e4ff; border-radius:10px; padding:14px;">
-                <div style="font-size:0.85rem; color:#777;">Villes visitees</div>
-                <div style="font-size:1.5rem; font-weight:700;">{{ nb_villes }}</div>
-            </div>
-        </section>
-
-        <section style="margin-bottom:20px; border-top:1px solid #eee; padding-top:16px;">
-            <h3 style="margin:0 0 12px;">Modifier mes informations</h3>
-            <form method="post" action="{% url 'accounts:edit_profile' %}" class="auth-form">
+        <!-- Section modification infos -->
+        <section class="profile-section">
+            <h3 class="profile-section-title"><i class="fas fa-user-edit"></i> Modifier mes informations</h3>
+            <form method="post" action="{% url 'accounts:edit_profile' %}" class="profile-modern-form">
                 {% csrf_token %}
-                <div class="form-group">
-                    <label for="id_first_name"><i class="fas fa-user"></i> Prenom</label>
-                    {{ edit_form.first_name }}
-                    {% if edit_form.first_name.errors %}<div class="field-error">{{ edit_form.first_name.errors }}</div>{% endif %}
+                <div class="profile-modern-form-grid">
+                    <div class="form-group">
+                        <label for="id_first_name"><i class="fas fa-user"></i> Prénom</label>
+                        {{ edit_form.first_name }}
+                        {% if edit_form.first_name.errors %}<div class="field-error">{{ edit_form.first_name.errors }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_last_name"><i class="fas fa-user"></i> Nom</label>
+                        {{ edit_form.last_name }}
+                        {% if edit_form.last_name.errors %}<div class="field-error">{{ edit_form.last_name.errors }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_phone"><i class="fas fa-phone"></i> Téléphone</label>
+                        {{ edit_form.phone }}
+                        {% if edit_form.phone.errors %}<div class="field-error">{{ edit_form.phone.errors }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_email"><i class="fas fa-envelope"></i> Email</label>
+                        {{ edit_form.email }}
+                        {% if edit_form.email.errors %}<div class="field-error">{{ edit_form.email.errors }}</div>{% endif %}
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="id_last_name"><i class="fas fa-user"></i> Nom</label>
-                    {{ edit_form.last_name }}
-                    {% if edit_form.last_name.errors %}<div class="field-error">{{ edit_form.last_name.errors }}</div>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="id_phone"><i class="fas fa-phone"></i> Telephone</label>
-                    {{ edit_form.phone }}
-                    {% if edit_form.phone.errors %}<div class="field-error">{{ edit_form.phone.errors }}</div>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="id_email"><i class="fas fa-envelope"></i> Email</label>
-                    {{ edit_form.email }}
-                    {% if edit_form.email.errors %}<div class="field-error">{{ edit_form.email.errors }}</div>{% endif %}
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">Enregistrer</button>
+                <button type="submit" class="btn btn-primary profile-modern-btn">Enregistrer</button>
             </form>
         </section>
 
-        <section style="border-top:1px solid #eee; padding-top:16px;">
-            <h3 style="margin:0 0 12px;">Changer mon mot de passe</h3>
-            <form method="post" action="{% url 'accounts:change_password' %}" class="auth-form">
+        <!-- Section changement mot de passe -->
+        <section class="profile-section">
+            <h3 class="profile-section-title"><i class="fas fa-key"></i> Changer mon mot de passe</h3>
+            <form method="post" action="{% url 'accounts:change_password' %}" class="profile-modern-form">
                 {% csrf_token %}
-                <div class="form-group">
-                    <label for="id_old_password"><i class="fas fa-lock"></i> Ancien mot de passe</label>
-                    {{ password_form.old_password }}
-                    {% if password_form.old_password.errors %}<div class="field-error">{{ password_form.old_password.errors }}</div>{% endif %}
+                <div class="profile-modern-form-grid">
+                    <div class="form-group">
+                        <label for="id_new_password1"><i class="fas fa-lock"></i> Nouveau mot de passe</label>
+                        {{ password_form.new_password1 }}
+                        {% if password_form.new_password1.errors %}<div class="field-error">{{ password_form.new_password1.errors }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_new_password2"><i class="fas fa-lock"></i> Confirmation</label>
+                        {{ password_form.new_password2 }}
+                        {% if password_form.new_password2.errors %}<div class="field-error">{{ password_form.new_password2.errors }}</div>{% endif %}
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="id_new_password1"><i class="fas fa-lock"></i> Nouveau mot de passe</label>
-                    {{ password_form.new_password1 }}
-                    {% if password_form.new_password1.errors %}<div class="field-error">{{ password_form.new_password1.errors }}</div>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="id_new_password2"><i class="fas fa-lock"></i> Confirmation</label>
-                    {{ password_form.new_password2 }}
-                    {% if password_form.new_password2.errors %}<div class="field-error">{{ password_form.new_password2.errors }}</div>{% endif %}
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">Changer le mot de passe</button>
+                <button type="submit" class="btn btn-primary profile-modern-btn">Changer le mot de passe</button>
             </form>
         </section>
+    </div>
+</div>
+
+     
     </div>
 </div>
 {% endblock %}

@@ -71,12 +71,12 @@ class CustomLogoutView(LogoutView):
 @login_required
 def profile(request):
     confirmed = Reservation.objects.filter(
-        user=request.user,
-        status=ReservationStatus.CONFIRMEE,
+        utilisateur=request.user,
+        statut=ReservationStatus.CONFIRMEE,
     )
     nb_voyages = confirmed.count()
     total_depense = confirmed.aggregate(total=Sum("prix_total"))["total"] or 0
-    nb_villes = confirmed.values("departure__trip__arret_arrivee__ville").distinct().count()
+    nb_villes = confirmed.values("depart__trip__arret_arrivee__ville").distinct().count()
 
     context = {
         "active_tab": "profile",
@@ -102,14 +102,14 @@ def edit_profile(request):
         form = ProfileEditForm(instance=request.user)
 
     confirmed = Reservation.objects.filter(
-        user=request.user,
-        status=ReservationStatus.CONFIRMEE,
+        utilisateur=request.user,
+        statut=ReservationStatus.CONFIRMEE,
     )
     context = {
         "active_tab": "profile",
         "nb_voyages": confirmed.count(),
         "total_depense": confirmed.aggregate(total=Sum("prix_total"))["total"] or 0,
-        "nb_villes": confirmed.values("departure__trip__arret_arrivee__ville").distinct().count(),
+        "nb_villes": confirmed.values("depart__trip__arret_arrivee__ville").distinct().count(),
         "edit_form": form,
         "password_form": _style_password_form(PasswordChangeForm(user=request.user)),
     }

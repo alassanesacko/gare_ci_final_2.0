@@ -37,7 +37,7 @@ def reservation_list(request):
         request,
         "reservations/reservation_list.html",
         {
-            "reservations": reservations.order_by("-booked_at"),
+            "reservations": reservations.order_by("-created_at"),
             "active_tab": "reservation",
             "current_statut": statut,
         },

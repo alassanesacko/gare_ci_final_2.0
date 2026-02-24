@@ -2,50 +2,53 @@
 {% block title %}A propos{% endblock %}
 
 {% block content %}
+
 <section class="about-hero">
     <div class="about-hero-content">
-        <span class="about-kicker">GareCI</span>
-        <h1>Voyager en bus en toute confiance</h1>
+        <span class="about-kicker"><i class="fas fa-bus"></i> GareCI</span>
+        <h1><i class="fas fa-route about-hero-icon"></i> Voyager en bus en toute confiance</h1>
         <p>
-            GareCI simplifie la reservation de billets interurbains en Cote d'Ivoire avec une experience claire,
-            un suivi des departs en temps reel et un service client reactif.
+            GareCI simplifie la réservation de billets interurbains en Côte d'Ivoire avec une expérience claire,
+            un suivi des départs en temps réel et un service client réactif.
         </p>
     </div>
 </section>
 
 <section class="about-grid">
     <article class="about-card">
-        <h2>Notre mission</h2>
+        <h2><i class="fas fa-bullseye"></i> Notre mission</h2>
         <p>
-            Rendre la mobilite interurbaine plus accessible grace a une plateforme fiable, simple et securisee,
+            Rendre la mobilité interurbaine plus accessible grâce à une plateforme fiable, simple et sécurisée,
             autant pour les voyageurs que pour les compagnies de transport.
         </p>
     </article>
 
     <article class="about-card">
-        <h2>Ce que nous faisons</h2>
+        <h2><i class="fas fa-cogs"></i> Ce que nous faisons</h2>
         <ul>
-            <li>Recherche de trajets et visualisation des departs disponibles.</li>
-            <li>Reservation en ligne avec suivi de statut.</li>
-            <li>Gestion operationnelle des bus, trajets, segments et departs.</li>
+            <li><i class="fas fa-search-location"></i> Recherche de trajets et visualisation des départs disponibles.</li>
+            <li><i class="fas fa-ticket-alt"></i> Réservation en ligne avec suivi de statut.</li>
+            <li><i class="fas fa-bus-alt"></i> Gestion opérationnelle des bus, trajets, segments et départs.</li>
         </ul>
     </article>
 
     <article class="about-card">
-        <h2>Nos engagements</h2>
+        <h2><i class="fas fa-handshake"></i> Nos engagements</h2>
         <ul>
-            <li>Informations claires sur les horaires et les prix.</li>
-            <li>Processus de reservation rapide et transparent.</li>
-            <li>Amelioration continue du service selon les retours utilisateurs.</li>
+            <li><i class="fas fa-clock"></i> Informations claires sur les horaires et les prix.</li>
+            <li><i class="fas fa-bolt"></i> Processus de réservation rapide et transparent.</li>
+            <li><i class="fas fa-chart-line"></i> Amélioration continue du service selon les retours utilisateurs.</li>
         </ul>
     </article>
 </section>
 
 <section class="about-band">
     <div>
-        <h3>Besoin d'aide pour planifier votre trajet ?</h3>
-        <p>Notre equipe est disponible pour vous accompagner avant et apres votre reservation.</p>
+        <h3><i class="fas fa-headset"></i> Besoin d'aide pour planifier votre trajet ?</h3>
+        <p>Notre équipe est disponible pour vous accompagner avant et après votre réservation.</p>
     </div>
-    <a href="{% url 'trips:home' %}#contact" class="btn btn-primary">Contacter le support</a>
+    <a href="{% url 'trips:home' %}#contact" class="btn btn-primary about-support-btn">
+        <i class="fas fa-envelope-open-text"></i> Contacter le support
+    </a>
 </section>
 {% endblock %}
