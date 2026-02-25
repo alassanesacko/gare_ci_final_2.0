@@ -26,10 +26,13 @@
         <tr>
           <th>Référence</th>
           <th>Client</th>
+          <th>Email</th>
           <th>Trajet</th>
           <th>Départ</th>
           <th>Places</th>
           <th>Total</th>
+          <th>Date réservation</th>
+          <th>Moyen paiement</th>
           <th>Statut</th>
           <th>Billet</th>
         </tr>
@@ -42,15 +45,20 @@
             <strong>{{ resa.utilisateur.get_full_name|default:resa.utilisateur.username }}</strong><br>
             <small>{{ resa.utilisateur.phone }}</small>
           </td>
+          <td>{{ resa.utilisateur.email }}</td>
           <td>{{ resa.depart.trip.arret_depart.ville }} → {{ resa.depart.trip.arret_arrivee.ville }}</td>
           <td>{{ resa.depart.heure_depart|time:"H:i" }} → {{ resa.depart.heure_arrivee|time:"H:i" }}</td>
           <td>{{ resa.nombre_places }}</td>
           <td>{{ resa.prix_total }} FCFA</td>
+          <td>{{ resa.created_at|date:"d/m/Y H:i" }}</td>
+          <td>{% if resa.paiement %}{{ resa.paiement.moyen }}{% else %}—{% endif %}</td>
           <td>
             {% if resa.statut == 'CONFIRMEE' %}
               <span class="badge badge-vert">✅ Confirmée</span>
             {% elif resa.statut == 'EN_ATTENTE' %}
               <span class="badge badge-orange">⏳ En attente</span>
+            {% else %}
+              <span class="badge badge-gris">—</span>
             {% endif %}
           </td>
           <td>

@@ -81,9 +81,12 @@
             <a href="{% url 'reservations:paiement' reservation.id %}" class="btn-action btn-pay">
               <i class="fas fa-credit-card"></i> Payer maintenant
             </a>
-            <a href="{% url 'reservations:annuler' reservation.id %}" class="btn-action btn-cancel" onclick="return confirm('Êtes-vous sûr de vouloir annuler cette réservation?')">
-              <i class="fas fa-times"></i> Annuler
-            </a>
+            <form action="{% url 'reservations:annuler' reservation.id %}" method="post" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn-action btn-cancel" onclick="return confirm('Êtes-vous sûr de vouloir annuler cette réservation?')">
+                <i class="fas fa-times"></i> Annuler
+              </button>
+            </form>
           {% elif reservation.statut == 'CONFIRMEE' %}
             <a href="{% url 'reservations:telecharger_billet' reservation.id %}" class="btn-action btn-download">
               <i class="fas fa-download"></i> Télécharger le billet
