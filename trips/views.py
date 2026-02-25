@@ -1,52 +1,73 @@
 # trips/views.py
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Departure
-from .forms import TripSearchForm
-from reservations.forms import ContactForm  # form de contact défini dans reservations
-from django.db.models import Q
+from django.db.models import Count, Q
+from django.shortcuts import render
+from django.utils import timezone
+
+from .models import Depart, Trip, Ville
 
 
 def home(request):
-    """
-    Page d'accueil publique. Affiche un formulaire de recherche et les départs actifs.
-    Gère aussi l'envoi du formulaire de contact (section Contact).
-    """
-    search_form = TripSearchForm(request.GET or None)
-    contact_form = ContactForm()
-    if request.method == 'POST':
-        # Traitement du formulaire de contact (nom, email, message)
-        contact_form = ContactForm(request.POST)
-        if contact_form.is_valid():
-            contact_form.save()
-            return redirect('trips:home')
-    # Liste des départs actifs
-    departures = Departure.objects.filter(actif=True)
-    return render(request, 'home.html', {
-        'search_form': search_form,
-        'contact_form': contact_form,
-        'departures': departures,
-        'active_tab': 'home'
-    })
+    """Page d'accueil publique (client) avec formulaire de recherche."""
+    villes = Ville.objects.order_by("nom")
+    today = timezone.localdate()
+    return render(
+        request,
+        "trips/home.html",
+        {
+            "villes": villes,
+            "today": today,
+            "active_tab": "home",
+        },
+    )
+
 
 def search_results(request):
-    """
-    Affiche les résultats de la recherche de trajets (basé sur GET).
-    Filtre les départs actifs selon origine, destination et date.
-    Si aucun filtre n'est renseigné, affiche tous les départs actifs (même logique que la page d'accueil).
-    """
-    origin = request.GET.get('origin', '').strip()
-    destination = request.GET.get('destination', '').strip()
-    date = request.GET.get('date', '').strip()
-    results = Departure.objects.filter(actif=True)
-    if origin and destination:
-        results = results.filter(
-            Q(trip__ville_depart__nom__icontains=origin)
-            & Q(trip__ville_arrivee__nom__icontains=destination)
-        )
-    elif origin:
-        results = results.filter(trip__ville_depart__nom__icontains=origin)
-    elif destination:
-        results = results.filter(trip__ville_arrivee__nom__icontains=destination)
-    if date:
-        results = results.filter(date_depart__date=date)
-    return render(request, 'trips/search_results.html', {'results': results})
+    ville_depart_nom  = request.GET.get("ville_depart", "").strip()
+    ville_arrivee_nom = request.GET.get("ville_arrivee", "").strip()
+    resultats         = []
+    date_recherche    = timezone.localdate()
+
+    if ville_depart_nom or ville_arrivee_nom:
+        query = Q(actif=True)
+        
+        if ville_depart_nom:
+            query &= Q(trip__arret_depart__ville__nom__icontains=ville_depart_nom)
+        
+        if ville_arrivee_nom:
+            query &= Q(trip__arret_arrivee__ville__nom__icontains=ville_arrivee_nom)
+        
+        departs = Depart.objects.filter(query).select_related(
+            "trip__arret_depart__ville",
+            "trip__arret_arrivee__ville",
+            "bus__categorie",
+        ).order_by("heure_depart")
+
+        for depart in departs:
+            places = depart.places_disponibles_pour(date_recherche)
+            if places > 0:
+                resultats.append({
+                    "depart": depart,
+                    "places": places,
+                    "date":   date_recherche,
+                })
+
+    return render(request, "trips/search_results.html", {
+        "resultats":        resultats,
+        "date_recherche":   date_recherche,
+        "date_str":         date_recherche.isoformat(),
+        "ville_depart_nom": ville_depart_nom,
+        "ville_arrivee_nom": ville_arrivee_nom,
+        "villes":           Ville.objects.all().order_by("nom"),
+        "nb_resultats":     len(resultats),
+        "today":            timezone.localdate(),
+    })
+
+
+def about(request):
+    """Page A propos publique."""
+    return render(request, "about.html", {"active_tab": "about"})
+
+
+def cgv(request):
+    """Page Conditions generales de vente."""
+    return render(request, "cgv.html", {"active_tab": "cgv"})

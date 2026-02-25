@@ -1,82 +1,96 @@
 {% extends 'dashboard/dashboard_base.html' %}
-{% block title %}Toutes les réservations{% endblock %}
+{% block title %}📋 Réservations par date de voyage{% endblock %}
 {% block content %}
-<div class="reservations-container">
-    <div class="reservations-header">
-        <h2><i class="fas fa-list-alt"></i> Toutes les réservations</h2>
-        <a href="{% url 'dashboard:index' %}" class="btn btn-default">
-            <i class="fas fa-arrow-left"></i> Retour au dashboard
-        </a>
+<!-- ACCORDÉON PAR DATE DE VOYAGE -->
+{% for item in dates %}
+<div class="accordion-item" id="date-{{ item.date|date:'Y-m-d' }}">
+  <div class="accordion-header" onclick="toggleAccordion('date-{{ item.date|date:'Y-m-d' }}')">
+    <div class="accordion-left">
+      <span class="accordion-icon">📅</span>
+      <span class="accordion-date">{{ item.date|date:"l d F Y" }}</span>
     </div>
-
-    <table class="reservations-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Client</th>
-                <th>Trajet</th>
-                <th>Date départ</th>
-                <th>Date réservation</th>
-                <th>Statut</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for reservation in reservations %}
-            <tr>
-                <td>#{{ reservation.id }}</td>
-                <td>{{ reservation.user.username }}</td>
-                <td>{{ reservation.departure.trip.origin }} → {{ reservation.departure.trip.destination }}</td>
-                <td>{{ reservation.departure.date|date:"d/m/Y" }} {{ reservation.departure.time|time:'H:i' }}</td>
-                <td>{{ reservation.booked_at|date:'d/m/Y H:i' }}</td>
-                <td>
-                    <span class="status-badge 
-                        {% if reservation.status == 'P' %}status-pending
-                        {% elif reservation.status == 'C' %}status-confirmed
-                        {% elif reservation.status == 'X' %}status-cancelled{% endif %}">
-                        {% if reservation.status == 'P' %}En attente
-                        {% elif reservation.status == 'C' %}Confirmée
-                        {% elif reservation.status == 'X' %}Annulée{% endif %}
-                    </span>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        {% if reservation.status == 'P' %}
-                            <form method="post" action="{% url 'dashboard:reservation_confirm' reservation.id %}" style="display:inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-success">
-                                    <i class="fas fa-check"></i> Confirmer
-                                </button>
-                            </form>
-                        {% elif reservation.status == 'C' %}
-                            <button class="btn btn-sm btn-success" disabled style="pointer-events: none; opacity: 0.7;">
-                                <i class="fas fa-check"></i> Confirmer
-                            </button>
-                        {% elif reservation.status == 'X' %}
-                            <button class="btn btn-sm btn-success" disabled style="pointer-events: none; opacity: 0.7;">
-                                <i class="fas fa-check"></i> Confirmer
-                            </button>
-                        {% endif %}
-                        <a href="{% url 'dashboard:reservation_edit' reservation.id %}" class="btn btn-sm btn-warning">
-                            <i class="fas fa-edit"></i> Modifier
-                        </a>
-                        <a href="{% url 'dashboard:reservation_delete' reservation.id %}" 
-                           class="btn btn-sm btn-danger"
-                           onclick="return confirm('Voulez-vous vraiment supprimer cette réservation ?');">
-                            <i class="fas fa-trash"></i> Supprimer
-                        </a>
-                    </div>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="7" class="empty-state">
-                    <i class="fas fa-ticket-alt"></i>
-                    <p>Aucune réservation trouvée</p>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
+    <div class="accordion-badges">
+      {% if item.nb_confirmees %}
+      <span class="badge badge-vert">✅ {{ item.nb_confirmees }} confirmée(s)</span>
+      {% endif %}
+      {% if item.nb_en_attente %}
+      <span class="badge badge-orange">⏳ {{ item.nb_en_attente }} en attente</span>
+      {% endif %}
+      <span class="badge badge-gris">💰 {{ item.recettes }} FCFA</span>
+    </div>
+    <span class="accordion-arrow" id="arrow-{{ item.date|date:'Y-m-d' }}">▼</span>
+  </div>
+  <div class="accordion-body" id="body-{{ item.date|date:'Y-m-d' }}">
+    <table class="table-reservations">
+      <thead>
+        <tr>
+          <th>Référence</th>
+          <th>Client</th>
+          <th>Email</th>
+          <th>Trajet</th>
+          <th>Départ</th>
+          <th>Places</th>
+          <th>Total</th>
+          <th>Date réservation</th>
+          <th>Moyen paiement</th>
+          <th>Statut</th>
+          <th>Billet</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for resa in item.reservations %}
+        <tr>
+          <td><code>{{ resa.reference }}</code></td>
+          <td>
+            <strong>{{ resa.utilisateur.get_full_name|default:resa.utilisateur.username }}</strong><br>
+            <small>{{ resa.utilisateur.phone }}</small>
+          </td>
+          <td>{{ resa.utilisateur.email }}</td>
+          <td>{{ resa.depart.trip.arret_depart.ville }} → {{ resa.depart.trip.arret_arrivee.ville }}</td>
+          <td>{{ resa.depart.heure_depart|time:"H:i" }} → {{ resa.depart.heure_arrivee|time:"H:i" }}</td>
+          <td>{{ resa.nombre_places }}</td>
+          <td>{{ resa.prix_total }} FCFA</td>
+          <td>{{ resa.created_at|date:"d/m/Y H:i" }}</td>
+          <td>{% if resa.paiement %}{{ resa.paiement.moyen }}{% else %}—{% endif %}</td>
+          <td>
+            {% if resa.statut == 'CONFIRMEE' %}
+              <span class="badge badge-vert">✅ Confirmée</span>
+            {% elif resa.statut == 'EN_ATTENTE' %}
+              <span class="badge badge-orange">⏳ En attente</span>
+            {% else %}
+              <span class="badge badge-gris">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if resa.statut == 'CONFIRMEE' %}
+              <a href="{% url 'admin_voir_billet' resa.id %}" class="btn-sm btn-gris" target="_blank">📄 Voir</a>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
+  </div>
 </div>
+{% empty %}
+<div class="empty-state">Aucune réservation pour le moment.</div>
+{% endfor %}
+<script>
+function toggleAccordion(dateId) {
+    const body  = document.getElementById('body-'  + dateId);
+    const arrow = document.getElementById('arrow-' + dateId);
+    const isOpen = body.style.display === 'block';
+    body.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent  = isOpen ? '▼' : '▲';
+}
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const bodyDuJour  = document.getElementById('body-'  + today);
+    const arrowDuJour = document.getElementById('arrow-' + today);
+    if (bodyDuJour) {
+        bodyDuJour.style.display  = 'block';
+        arrowDuJour.textContent   = '▲';
+    }
+});
+</script>
 {% endblock %}

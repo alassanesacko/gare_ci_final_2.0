@@ -1,149 +1,319 @@
-# reservations/views.py
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
-from django.http import FileResponse, HttpResponse, HttpResponseForbidden
-from .models import Reservation, ContactMessage, Paiement, ReservationStatus
-from .forms import ContactForm
-from .ticket import generate_ticket_pdf
-from trips.models import Departure
+from datetime import datetime
 from django.utils import timezone
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
+
+from trips.models import Depart
+
+from .forms import ReservationForm
+from .models import ContactMessage, Paiement, Reservation, ReservationStatus
+from .services import ReservationService
+
 
 @login_required
 def reservation_list(request):
-    """
-    Affiche les réservations du client connecté (lecture seule).
-    """
-    reservations = Reservation.objects.filter(user=request.user)
-    return render(request, 'reservations/reservation_list.html', {'reservations': reservations,'active_tab':'reservation'})
+    statut = request.GET.get("statut", "").strip().upper()
+    reservations = Reservation.objects.filter(utilisateur=request.user).select_related(
+        "depart",
+        "depart__trip",
+        "depart__bus",
+    )
+    allowed_filters = {
+        ReservationStatus.CONFIRMEE,
+        ReservationStatus.EN_ATTENTE,
+        ReservationStatus.ANNULEE,
+    }
+    if statut in allowed_filters:
+        reservations = reservations.filter(statut=statut)
+
+    return render(
+        request,
+        "reservations/reservation_list.html",
+        {
+            "reservations": reservations.order_by("-created_at"),
+            "active_tab": "reservation",
+            "current_statut": statut,
+        },
+    )
+
 
 @login_required
-def reserve_departure(request, departure_id):
-    """
-    Permet au client connecté de réserver un départ (actif). 
-    """
-    # On s'assure que le départ existe et est actif
-    departure = get_object_or_404(Departure, id=departure_id, actif=True)
-    
-    # Vérifier qu'il y a encore des places disponibles
-    if departure.get_remaining_seats() <= 0:
-        return render(request, 'reservations/reserve.html', {
-            'departure': departure,
-            'error': 'Ce départ est complet. Aucune place disponible.'
-        })
-    
-    if request.method == 'POST':
-        # Générer automatiquement le numéro de siège
-        seat_number = departure.get_next_seat_number()
-        
-        # Créer la réservation
-        Reservation.objects.create(
-            user=request.user, 
-            departure=departure, 
-            status='P',
-            seat_number=seat_number
-        )
-        return redirect('reservations:list')
-    
-    # Page de confirmation de réservation
-    return render(request, 'reservations/reserve.html', {'departure': departure})
+def reserve(request, depart_id, date_str):
+    depart = get_object_or_404(
+        Depart.objects.select_related(
+            "trip",
+            "trip__arret_depart__ville",
+            "trip__arret_arrivee__ville",
+            "bus",
+            "bus__categorie",
+        ).prefetch_related("trip__etapetrajet_set__segment__arret_arrivee__ville"),
+        id=depart_id,
+        actif=True,
+    )
+
+
+    # Par défaut, on prend la date de l'URL
+    date_voyage = None
+    if request.method == "POST":
+        # Si le formulaire contient une date, on la prend
+        date_input = request.POST.get("reservation_date")
+        if date_input:
+            try:
+                date_voyage = datetime.strptime(date_input, "%Y-%m-%d").date()
+            except ValueError:
+                date_voyage = None
+        else:
+            try:
+                date_voyage = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                date_voyage = None
+    else:
+        try:
+            date_voyage = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            date_voyage = None
+
+    if not date_voyage:
+        messages.error(request, "Date de voyage invalide.")
+        return redirect("search_results")
+
+    if date_voyage < timezone.now().date():
+        messages.error(request, "Cette date est déjà passée.")
+        return redirect("search_results")
+
+    places_dispo = depart.places_disponibles_pour(date_voyage)
+
+    if request.method == "POST":
+        form = ReservationForm(request.POST, places_disponibles=places_dispo)
+        if form.is_valid():
+            try:
+                reservation = ReservationService.creer(
+                    depart_id=depart.id,
+                    date_voyage=date_voyage,
+                    utilisateur=request.user,
+                    nombre_places=form.cleaned_data["nombre_places"],
+                )
+                return redirect("reservations:paiement", reservation_id=reservation.id)
+            except ValidationError as e:
+                messages.error(request, str(e))
+                form.add_error(None, str(e))
+    else:
+        form = ReservationForm(places_disponibles=places_dispo)
+
+    etapes = list(depart.trip.etapetrajet_set.all())
+    if len(etapes) <= 1:
+        type_trajet = "Direct"
+        escales = []
+    else:
+        escales = []
+        for etape in etapes[:-1]:
+            ville_nom = etape.segment.arret_arrivee.ville.nom
+            if ville_nom not in escales:
+                escales.append(ville_nom)
+        type_trajet = "Escale"
+
+    return render(
+        request,
+        "reservations/reserve.html",
+        {
+            "depart": depart,
+            "date_voyage": date_voyage,
+            "places_dispo": places_dispo,
+            "form": form,
+            "type_trajet": type_trajet,
+            "escales": escales,
+        },
+    )
+
+
+@login_required
+def attente_validation(request, reservation_id):
+    reservation = get_object_or_404(Reservation, id=reservation_id, utilisateur=request.user)
+    return render(request, "reservations/attente_validation.html", {"reservation": reservation})
+
+
+@login_required
+@require_POST
+def annuler_reservation(request, reservation_id):
+    reservation = get_object_or_404(
+        Reservation,
+        id=reservation_id,
+        utilisateur=request.user,
+    )
+    reservation.annuler()
+    return redirect("reservations:list")
+
 
 @login_required
 def message_list(request):
-    """
-    Affiche les messages de contact envoyés par le client connecté (filtrés par email).
-    """
-    messages = ContactMessage.objects.filter(email=request.user.email).order_by('-submitted_at')
-    return render(request, 'reservations/message_list.html', {'messages': messages, 'active_tab':'message' })
+    user_messages = ContactMessage.objects.filter(email=request.user.email).order_by("-submitted_at")
+    return render(
+        request,
+        "reservations/message_list.html",
+        {"messages": user_messages, "active_tab": "message"},
+    )
+
 
 @login_required
 @require_POST
 def delete_message(request, pk):
-    """
-    Permet au client connecté de supprimer un de ses messages de contact.
-    """
     msg = get_object_or_404(ContactMessage, pk=pk, email=request.user.email)
     msg.delete()
-    return redirect('reservations:messages')
+    return redirect("reservations:messages")
+
 
 @login_required
-def download_ticket(request, pk):
-    """
-    Permet au client de télécharger le ticket PDF de sa réservation.
-    """
-    reservation = get_object_or_404(Reservation, pk=pk, user=request.user)
-    
-    # Générer le PDF
-    pdf_buffer = generate_ticket_pdf(reservation)
-    
-    # Retourner le fichier
-    response = FileResponse(
-        pdf_buffer,
-        content_type='application/pdf',
-        as_attachment=True,
-        filename=f"Ticket_Reservation_{reservation.id}.pdf"
+def telecharger_billet(request, reservation_id):
+    reservation = get_object_or_404(
+        Reservation,
+        id=reservation_id,
+        utilisateur=request.user,
+        statut=ReservationStatus.CONFIRMEE,
     )
+    from .ticket import get_ticket_context
     
-    return response
+    context = get_ticket_context(reservation)
+    return render(request, "reservations/billet.html", context)
 
 
 @login_required
 def paiement(request, reservation_id):
-    reservation = get_object_or_404(Reservation, id=reservation_id, user=request.user)
-
-    # Statuts spécifiques
-    if reservation.status == ReservationStatus.EN_ATTENTE_VALIDATION:
-        return render(request, 'reservations/attente_validation.html', {'reservation': reservation})
-
-    if reservation.status == ReservationStatus.REJETEE:
-        return render(request, 'reservations/reservation_rejetee.html', {'reservation': reservation})
-
-    if reservation.status == ReservationStatus.EXPIREE:
-        return render(request, 'reservations/paiement_expire.html', {'reservation': reservation})
-
-    # Si validée, on crée ou récupère un Paiement en attente
-    if reservation.status == ReservationStatus.VALIDEE:
-        paiement_obj, created = Paiement.objects.get_or_create(
-            reservation=reservation,
-            defaults={'montant': reservation.prix_total}
-        )
-        return render(request, 'reservations/paiement.html', {'reservation': reservation, 'paiement': paiement_obj})
-
-    # Pour les autres statuts, rediriger vers la liste
-    return redirect('reservations:list')
+    reservation = get_object_or_404(
+        Reservation,
+        id=reservation_id,
+        utilisateur=request.user,
+        statut=ReservationStatus.EN_ATTENTE,
+    )
+    paiement_obj, _ = Paiement.objects.get_or_create(
+        reservation=reservation,
+        defaults={
+            "montant": reservation.prix_total,
+            "statut": Paiement.Statut.EN_ATTENTE,
+        },
+    )
+    return render(request, "reservations/paiement.html", {"reservation": reservation, "paiement": paiement_obj})
 
 
 @login_required
 @require_POST
 def traiter_paiement(request, reservation_id):
-    reservation = get_object_or_404(Reservation, id=reservation_id, user=request.user)
-    try:
-        paiement_obj = reservation.paiement
-    except Paiement.DoesNotExist:
-        return HttpResponse(status=404)
-
-    # Vérifier que la réservation n'est pas expirée
-    if getattr(reservation, 'est_expiree', False):
-        return redirect('reservations:paiement_echec')
-
-    action = request.POST.get('action')
-    if action == 'payer':
+    reservation = get_object_or_404(
+        Reservation,
+        id=reservation_id,
+        utilisateur=request.user,
+        statut=ReservationStatus.EN_ATTENTE,
+    )
+    paiement_obj = get_object_or_404(Paiement, reservation=reservation)
+    action = request.POST.get("action")
+    if action == "payer":
         paiement_obj.statut = Paiement.Statut.REUSSI
-        paiement_obj.save()
-        # Confirmer la réservation
+        paiement_obj.save(update_fields=["statut"])
         reservation.confirmer()
-        return redirect('reservations:paiement_succes')
-    elif action == 'echouer':
+        return redirect("reservations:paiement_succes", reservation_id=reservation.id)
+    elif action == "echouer":
         paiement_obj.statut = Paiement.Statut.ECHOUE
-        paiement_obj.save()
-        return redirect('reservations:paiement_echec')
-    else:
-        return HttpResponse(status=400)
+        paiement_obj.save(update_fields=["statut"])
+        messages.error(request, "Paiement échoué. Veuillez réessayer.")
+        return redirect("reservations:paiement", reservation_id=reservation.id)
+    return redirect("reservations:list")
 
 
-def paiement_succes(request):
-    return render(request, 'reservations/paiement_succes.html')
+@login_required
+def paiement_succes(request, reservation_id):
+    reservation = get_object_or_404(
+        Reservation,
+        id=reservation_id,
+        utilisateur=request.user,
+        statut=ReservationStatus.CONFIRMEE,
+    )
+    return render(request, "reservations/paiement_succes.html", {"reservation": reservation})
 
 
+@login_required
 def paiement_echec(request):
-    return render(request, 'reservations/paiement_echec.html')
+    return render(request, "reservations/paiement_echec.html")
+
+
+@login_required
+def contact(request):
+    if request.user.is_authenticated:
+        default_name = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
+        default_email = request.user.email or ""
+    else:
+        default_name = ""
+        default_email = ""
+
+    form_data = {
+        "nom_complet": default_name,
+        "email": default_email,
+        "sujet": "",
+        "message": "",
+    }
+    errors = {}
+
+    if request.method == "POST":
+        form_data = {
+            "nom_complet": request.POST.get("nom_complet", "").strip(),
+            "email": request.POST.get("email", "").strip(),
+            "sujet": request.POST.get("sujet", "").strip(),
+            "message": request.POST.get("message", "").strip(),
+        }
+
+        if not form_data["nom_complet"]:
+            errors["nom_complet"] = "Le nom complet est obligatoire."
+        if not form_data["email"]:
+            errors["email"] = "L'email est obligatoire."
+        if not form_data["sujet"]:
+            errors["sujet"] = "Le sujet est obligatoire."
+        if not form_data["message"]:
+            errors["message"] = "Le message est obligatoire."
+
+        if not errors:
+            contact_msg = ContactMessage.objects.create(
+                name=form_data["nom_complet"],
+                email=form_data["email"],
+                message=f"Sujet: {form_data['sujet']}\n\n{form_data['message']}",
+            )
+
+            admin_email = getattr(settings, "CONTACT_ADMIN_EMAIL", None)
+            if not admin_email:
+                admins = getattr(settings, "ADMINS", ())
+                admin_email = admins[0][1] if admins else getattr(settings, "DEFAULT_FROM_EMAIL", None)
+
+            if admin_email:
+                send_mail(
+                    subject=f"[Contact GareCI] {form_data['sujet']}",
+                    message=(
+                        f"Nouveau message de contact\n\n"
+                        f"Nom: {contact_msg.name}\n"
+                        f"Email: {contact_msg.email}\n"
+                        f"Sujet: {form_data['sujet']}\n\n"
+                        f"Message:\n{form_data['message']}"
+                    ),
+                    from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+                    recipient_list=[admin_email],
+                    fail_silently=True,
+                )
+
+            messages.success(
+                request,
+                "Votre message a bien ete envoye, nous vous repondrons sous 24h",
+            )
+            return redirect("reservations:contact")
+
+    return render(
+        request,
+        "reservations/contact.html",
+        {
+            "form_data": form_data,
+            "errors": errors,
+            "active_tab": "contact",
+        },
+    )

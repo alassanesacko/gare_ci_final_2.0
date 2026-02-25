@@ -1,92 +1,115 @@
 {% extends 'base.html' %}
-{% block title %}Mes Réservations - GareCI{% endblock %}
+{% block title %}Mes réservations - GareCI{% endblock %}
 
 {% block content %}
 <div class="reservations-container">
-    <div class="reservations-header">
-        <h1><i class="fas fa-ticket-alt"></i> Mes Réservations</h1>
-        <p class="subtitle">Historique de vos voyages avec GareCI</p>
-    </div>
+  <div class="reservations-header">
+    <h1><i class="fas fa-ticket-alt"></i> Mes réservations</h1>
+    <p class="subtitle">Gérez et suivez vos réservations de voyage</p>
+  </div>
 
-    {% if user.is_authenticated %}
-        {% if reservations %}
-        <div class="reservations-table-container">
-            <table class="reservations-table">
-                <thead>
-                    <tr>
-                        <th>Trajet</th>
-                        <th>Date</th>
-                        <th>Heure</th>
-                        <th>Bus</th>
-                        <th>Prix</th>
-                        <th>Statut</th>
-                        <th>Réservé le</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for reservation in reservations %}
-                    <tr class="reservation-row {% if reservation.status == 'X' %}cancelled{% elif reservation.status == 'P' %}pending{% endif %}">
-                        <td data-label="Trajet">
-                            <div class="trip-info">
-                                <span class="origin">{{ reservation.departure.trip.origin }}</span>
-                                <i class="fas fa-arrow-right"></i>
-                                <span class="destination">{{ reservation.departure.trip.destination }}</span>
-                            </div>
-                        </td>
-                        <td data-label="Date">{{ reservation.departure.date|date:"d/m/Y" }}</td>
-                        <td data-label="Heure">{{ reservation.departure.time|time:'H:i' }}</td>
-                        <td data-label="Bus">
-                            <div class="bus-info">
-                                <i class="fas fa-bus"></i> {{ reservation.departure.bus }}
-                            </div>
-                        </td>
-                        <td data-label="Prix">{{ reservation.departure.trip.price }} FCFA</td>
-                        <td data-label="Statut">
-                            <span class="status-badge 
-                                {% if reservation.status == 'C' %}confirmed
-                                {% elif reservation.status == 'P' %}pending
-                                {% else %}cancelled{% endif %}">
-                                {% if reservation.status == 'P' %}En attente
-                                {% elif reservation.status == 'C' %}Confirmée
-                                {% elif reservation.status == 'X' %}Annulée{% endif %}
-                            </span>
-                        </td>
-                        <td data-label="Réservé le">{{ reservation.booked_at|date:'d/m/Y H:i' }}</td>
-                        <td data-label="Actions">
-                            <a href="{% url 'reservations:download_ticket' reservation.pk %}" class="btn-action btn-download" title="Télécharger le ticket">
-                                <i class="fas fa-download"></i> Télécharger
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+  <div class="reservation-filters">
+    <a href="{% url 'reservations:list' %}" class="filter-link {% if not request.GET.statut %}active{% endif %}">Toutes</a>
+    <a href="{% url 'reservations:list' %}?statut=EN_ATTENTE" class="filter-link {% if request.GET.statut == 'EN_ATTENTE' %}active{% endif %}"><i class="fas fa-clock"></i> En attente</a>
+    <a href="{% url 'reservations:list' %}?statut=CONFIRMEE" class="filter-link {% if request.GET.statut == 'CONFIRMEE' %}active{% endif %}"><i class="fas fa-check-circle"></i> Confirmées</a>
+    <a href="{% url 'reservations:list' %}?statut=ANNULEE" class="filter-link {% if request.GET.statut == 'ANNULEE' %}active{% endif %}"><i class="fas fa-times-circle"></i> Annulées</a>
+  </div>
+
+  {% if reservations %}
+  <div class="reservations-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; margin-bottom: 40px;">
+    {% for reservation in reservations %}
+    <div class="reservation-card reservation-row {% if reservation.statut == 'CONFIRMEE' %}confirmed{% elif reservation.statut == 'EN_ATTENTE' %}pending{% else %}cancelled{% endif %}">
+      <div class="card-header">
+        <div class="reference-info">
+          <span class="reference">Réf. {{ reservation.reference }}</span>
+          <span class="status-badge {% if reservation.statut == 'CONFIRMEE' %}confirmed{% elif reservation.statut == 'EN_ATTENTE' %}pending{% else %}cancelled{% endif %}">
+            {% if reservation.statut == 'CONFIRMEE' %}
+              <i class="fas fa-check-circle"></i> Confirmée
+            {% elif reservation.statut == 'EN_ATTENTE' %}
+              <i class="fas fa-hourglass-half"></i> En attente
+            {% else %}
+              <i class="fas fa-ban"></i> Annulée
+            {% endif %}
+          </span>
         </div>
-        {% else %}
-        <div class="no-results">
-            <i class="fas fa-ticket-alt"></i>
-            <h3>Vous n'avez aucune réservation</h3>
-            <p>Commencez par rechercher un trajet pour réserver votre voyage.</p>
-            <a href="{% url 'trips:home' %}" class="btn btn-primary">
-                <i class="fas fa-search"></i> Rechercher un trajet
-            </a>
+      </div>
+
+      <div class="card-body">
+        <div class="trip-info">
+          <div class="trip-from-to">
+            <div class="city-from">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>{{ reservation.depart.trip.arret_depart.ville.nom }}</span>
+            </div>
+            <div class="trip-arrow">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+            <div class="city-to">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>{{ reservation.depart.trip.arret_arrivee.ville.nom }}</span>
+            </div>
+          </div>
         </div>
-        {% endif %}
-    {% else %}
-    <div class="auth-required">
-        <i class="fas fa-lock"></i>
-        <h3>Connexion requise</h3>
-        <p>Vous devez vous connecter pour accéder à vos réservations.</p>
-        <div class="auth-buttons">
-            <a href="{% url 'accounts:login' %}" class="btn btn-primary">
-                <i class="fas fa-sign-in-alt"></i> Se connecter
-            </a>
-            <a href="{% url 'accounts:register' %}" class="btn btn-outline">
-                <i class="fas fa-user-plus"></i> Créer un compte
-            </a>
+
+        <div class="trip-details">
+          <div class="detail-item">
+            <i class="fas fa-calendar-alt"></i>
+            <span class="label">Date :</span>
+            <span class="value">{{ reservation.date_voyage|date:'l d F Y' }}</span>
+          </div>
+          <div class="detail-item">
+            <i class="fas fa-clock"></i>
+            <span class="label">Départ :</span>
+            <span class="value">{{ reservation.heure_depart|time:'H:i' }}</span>
+          </div>
+          <div class="detail-item">
+            <i class="fas fa-users"></i>
+            <span class="label">Places :</span>
+            <span class="value">{{ reservation.nombre_places }} place{% if reservation.nombre_places > 1 %}s{% endif %}</span>
+          </div>
+          <div class="detail-item">
+            <i class="fas fa-money-bill-wave"></i>
+            <span class="label">Total :</span>
+            <span class="value price">{{ reservation.prix_total }} FCFA</span>
+          </div>
         </div>
+      </div>
+
+      <div class="card-footer">
+        <div class="action-buttons-extended">
+          {% if reservation.statut == 'EN_ATTENTE' %}
+            <a href="{% url 'reservations:paiement' reservation.id %}" class="btn-action btn-pay">
+              <i class="fas fa-credit-card"></i> Payer maintenant
+            </a>
+            <form action="{% url 'reservations:annuler' reservation.id %}" method="post" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn-action btn-cancel" onclick="return confirm('Êtes-vous sûr de vouloir annuler cette réservation?')">
+                <i class="fas fa-times"></i> Annuler
+              </button>
+            </form>
+          {% elif reservation.statut == 'CONFIRMEE' %}
+            <a href="{% url 'reservations:telecharger_billet' reservation.id %}" class="btn-action btn-download">
+              <i class="fas fa-download"></i> Télécharger le billet
+            </a>
+          {% elif reservation.statut == 'ANNULEE' %}
+            <div class="status-note"><i class="fas fa-info-circle"></i> Cette réservation a été annulée</div>
+          {% endif %}
+        </div>
+      </div>
     </div>
-    {% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">
+      <i class="fas fa-inbox"></i>
+    </div>
+    <h3>Aucune réservation</h3>
+    <p>Vous n'avez pas encore de réservation. Commencez par rechercher et réserver un voyage!</p>
+    <a href="{% url 'trips:home' %}" class="btn btn-primary" style="margin-top: 20px;">
+      <i class="fas fa-search"></i> Rechercher un voyage
+    </a>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

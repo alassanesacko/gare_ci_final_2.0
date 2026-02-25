@@ -1,8 +1,6 @@
 import os
 from pathlib import Path
 
-from celery.schedules import crontab
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -133,19 +131,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'sackoalassane28@gmail.com'
 EMAIL_HOST_PASSWORD = 'igha fzmt furi pkxb'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-# Celery
-CELERY_BROKER_URL = env('REDIS_URL')
-CELERY_BEAT_SCHEDULE = {
-    'expirer-reservations': {
-        'task': 'reservations.tasks.expirer_reservations',
-        'schedule': crontab(minute='*/5'),
-    },
-    'envoyer-rappels-voyage': {
-        'task': 'reservations.tasks.envoyer_rappels_voyage',
-        'schedule': crontab(hour=18, minute=0),
-    },
-}
 
 # Si les emails ne fonctionnent pas, utilisez le backend console pour voir les emails dans la console
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

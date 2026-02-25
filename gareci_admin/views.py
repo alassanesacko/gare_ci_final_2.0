@@ -3,13 +3,57 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView, T
 from django.shortcuts import redirect, get_object_or_404, render
 from django.utils import timezone
 from django.core.mail import send_mail
-
-from trips.models import Arret, Bus, Category, Departure, Segment, Trip, Ville
-from .models import Conducteur
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from reservations.models import ContactMessage, Reservation, ReservationStatus
+from django.http import HttpResponse
+from .models import Conducteur
 from gareci_admin.utils import StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin 
-from .forms import ArretForm, ContactReplyForm, DepartureAdminForm, EtapeTrajetFormSet, SegmentForm, TripAdminForm, VilleForm
+from .forms import ArretForm, ContactReplyForm, DepartForm, EtapeTrajetFormSet, SegmentForm, TripAdminForm, VilleForm
 from django.contrib.auth import get_user_model
+from trips.models import Bus, Category, Ville, Arret, Segment, Trip, Depart
+
+
+class CreateSuccessMessageMixin:
+    success_message = None
+
+    def get_success_message(self):
+        if self.success_message:
+            return self.success_message
+        return f"{self.model._meta.verbose_name.capitalize()} ajoute avec succes."
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, self.get_success_message())
+        return response
+
+
+class UpdateSuccessMessageMixin:
+    success_message = None
+
+    def get_success_message(self):
+        if self.success_message:
+            return self.success_message
+        return f"{self.model._meta.verbose_name.capitalize()} modifie avec succes."
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, self.get_success_message())
+        return response
+
+
+class DeleteSuccessMessageMixin:
+    success_message = None
+
+    def get_success_message(self):
+        if self.success_message:
+            return self.success_message
+        return f"{self.model._meta.verbose_name.capitalize()} supprime avec succes."
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, self.get_success_message())
+        return response
 
 
 # Gestion des Bus
@@ -20,7 +64,7 @@ class BusListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin , ListView
     breadcrumb_title ='Liste de Bus'
     
 
-class BusCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin , CreateView):
+class BusCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateSuccessMessageMixin, CreateView):
     model = Bus
     fields = ['immatriculation', 'modele', 'capacite', 'categorie', 'annee_fabrication', 'en_service', 'photo', 'derniere_revision']
     template_name = 'dashboard/bus_form.html'
@@ -28,7 +72,7 @@ class BusCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin , Create
     breadcrumb_title = 'Bus > Ajouter Bus'
     success_url = reverse_lazy('dashboard:bus_list')
 
-class BusUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , UpdateView):
+class BusUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin, UpdateSuccessMessageMixin, UpdateView):
     model = Bus
     fields = ['immatriculation', 'modele', 'capacite', 'categorie', 'annee_fabrication', 'en_service', 'photo', 'derniere_revision']
     template_name = 'dashboard/bus_form.html'
@@ -36,7 +80,7 @@ class BusUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , UpdateV
     breadcrumb_title = 'Bus > Modifier Bus'
     success_url = reverse_lazy('dashboard:bus_list')
 
-class BusDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , DeleteView):
+class BusDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin, DeleteSuccessMessageMixin, DeleteView):
     model = Bus
     template_name = 'dashboard/bus_confirm_delete.html'
     active_tab_value ='buses'
@@ -50,7 +94,7 @@ class CategoryListView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , List
     active_tab_value ='categories'
     breadcrumb_title = 'Categories'
 
-class CategoryCreateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , CreateView):
+class CategoryCreateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin, CreateSuccessMessageMixin, CreateView):
     model = Category
     fields = ['nom', 'niveau', 'prix_multiplicateur', 'a_wifi', 'a_climatisation', 'a_prise_usb', 'a_wc', 'a_repas', 'a_couchette']
     template_name = 'dashboard/category_form.html'
@@ -59,7 +103,7 @@ class CategoryCreateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , Cr
     breadcrumb_title = 'Categories > Ajouter Categories'
     success_url = reverse_lazy('dashboard:category_list')
 
-class CategoryUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , UpdateView):
+class CategoryUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin, UpdateSuccessMessageMixin, UpdateView):
     model = Category
     fields = ['nom', 'niveau', 'prix_multiplicateur', 'a_wifi', 'a_climatisation', 'a_prise_usb', 'a_wc', 'a_repas', 'a_couchette']
     template_name = 'dashboard/category_form.html'
@@ -67,7 +111,7 @@ class CategoryUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , Up
     breadcrumb_title = 'Categories > Modifier Categories'
     success_url = reverse_lazy('dashboard:category_list')
 
-class CategoryDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , DeleteView):
+class CategoryDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin, DeleteSuccessMessageMixin, DeleteView):
     model = Category
     template_name = 'dashboard/category_confirm_delete.html'
     active_tab_value ='categories'
@@ -83,7 +127,7 @@ class VilleListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, ListVie
     breadcrumb_title = "Villes"
 
 
-class VilleCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateView):
+class VilleCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateSuccessMessageMixin, CreateView):
     model = Ville
     form_class = VilleForm
     template_name = "dashboard/ville_form.html"
@@ -92,7 +136,7 @@ class VilleCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, Creat
     success_url = reverse_lazy("dashboard:ville_list")
 
 
-class VilleUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, UpdateView):
+class VilleUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, UpdateSuccessMessageMixin, UpdateView):
     model = Ville
     form_class = VilleForm
     template_name = "dashboard/ville_form.html"
@@ -101,7 +145,7 @@ class VilleUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, Updat
     success_url = reverse_lazy("dashboard:ville_list")
 
 
-class VilleDeleteView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, DeleteView):
+class VilleDeleteView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, DeleteSuccessMessageMixin, DeleteView):
     model = Ville
     template_name = "dashboard/ville_confirm_delete.html"
     active_tab_value = "villes"
@@ -117,7 +161,7 @@ class ArretListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, ListVie
     breadcrumb_title = "Arrets"
 
 
-class ArretCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateView):
+class ArretCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateSuccessMessageMixin, CreateView):
     model = Arret
     form_class = ArretForm
     template_name = "dashboard/arret_form.html"
@@ -126,7 +170,7 @@ class ArretCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, Creat
     success_url = reverse_lazy("dashboard:arret_list")
 
 
-class ArretUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, UpdateView):
+class ArretUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, UpdateSuccessMessageMixin, UpdateView):
     model = Arret
     form_class = ArretForm
     template_name = "dashboard/arret_form.html"
@@ -135,7 +179,7 @@ class ArretUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, Updat
     success_url = reverse_lazy("dashboard:arret_list")
 
 
-class ArretDeleteView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, DeleteView):
+class ArretDeleteView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, DeleteSuccessMessageMixin, DeleteView):
     model = Arret
     template_name = "dashboard/arret_confirm_delete.html"
     active_tab_value = "arrets"
@@ -151,7 +195,7 @@ class SegmentListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, ListV
     breadcrumb_title = "Segments"
 
 
-class SegmentCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateView):
+class SegmentCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateSuccessMessageMixin, CreateView):
     model = Segment
     form_class = SegmentForm
     template_name = "dashboard/segment_form.html"
@@ -160,7 +204,7 @@ class SegmentCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, Cre
     success_url = reverse_lazy("dashboard:segment_list")
 
 
-class SegmentUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, UpdateView):
+class SegmentUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, UpdateSuccessMessageMixin, UpdateView):
     model = Segment
     form_class = SegmentForm
     template_name = "dashboard/segment_form.html"
@@ -169,7 +213,7 @@ class SegmentUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, Upd
     success_url = reverse_lazy("dashboard:segment_list")
 
 
-class SegmentDeleteView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, DeleteView):
+class SegmentDeleteView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, DeleteSuccessMessageMixin, DeleteView):
     model = Segment
     template_name = "dashboard/segment_confirm_delete.html"
     active_tab_value = "segments"
@@ -185,7 +229,7 @@ class ConducteurListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, Li
     breadcrumb_title = 'Conducteurs'
 
 
-class ConducteurCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateView):
+class ConducteurCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateSuccessMessageMixin, CreateView):
     model = Conducteur
     fields = ['nom', 'prenom', 'cin', 'telephone', 'email', 'date_embauche', 'numero_permis', 'type_permis', 'date_expiration_permis', 'statut', 'photo']
     template_name = 'dashboard/conducteur_form.html'
@@ -194,7 +238,7 @@ class ConducteurCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, 
     success_url = reverse_lazy('dashboard:conducteur_list')
 
 
-class ConducteurUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, UpdateView):
+class ConducteurUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, UpdateSuccessMessageMixin, UpdateView):
     model = Conducteur
     fields = ['nom', 'prenom', 'cin', 'telephone', 'email', 'date_embauche', 'numero_permis', 'type_permis', 'date_expiration_permis', 'statut', 'photo']
     template_name = 'dashboard/conducteur_form.html'
@@ -203,7 +247,7 @@ class ConducteurUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, 
     success_url = reverse_lazy('dashboard:conducteur_list')
 
 
-class ConducteurDeleteView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, DeleteView):
+class ConducteurDeleteView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, DeleteSuccessMessageMixin, DeleteView):
     model = Conducteur
     template_name = 'dashboard/conducteur_confirm_delete.html'
     active_tab_value = 'conducteurs'
@@ -251,6 +295,7 @@ class TripCreateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , Create
         self.object = form.save()
         etape_formset.instance = self.object
         etape_formset.save()
+        messages.success(self.request, "Trajet ajoute avec succes.")
         return redirect(self.success_url)
 
 class TripUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , UpdateView):
@@ -287,48 +332,106 @@ class TripUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , Update
         self.object = form.save()
         etape_formset.instance = self.object
         etape_formset.save()
+        messages.success(self.request, "Trajet modifie avec succes.")
         return redirect(self.success_url)
 
-class TripDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , DeleteView):
+class TripDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin, DeleteSuccessMessageMixin, DeleteView):
     model = Trip
     template_name = 'dashboard/trip_confirm_delete.html'
     active_tab_value ='trips'
     breadcrumb_title = 'Trajets > Suppression Trajets'
     success_url = reverse_lazy('dashboard:trip_list')
 
-# Gestion des Departs (Departure)
-class DepartureListView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , ListView):
-    model = Departure
-    template_name = 'dashboard/departure_list.html'
-    active_tab_value ='departures'
-    breadcrumb_title = 'Departs'
+@staff_member_required(login_url="accounts:login")
+def depart_list(request):
+    today = timezone.localdate()
+    departs = (
+        Depart.objects.select_related(
+            "trip__arret_depart__ville",
+            "trip__arret_arrivee__ville",
+            "bus",
+        )
+        .order_by("trip", "heure_depart")
+    )
+    for depart in departs:
+        depart.places_du_jour = depart.places_disponibles_pour(today)
+    return render(
+        request,
+        "dashboard/depart_list.html",
+        {
+            "departs": departs,
+            "today": today,
+            "active_tab": "departures",
+            "breadcrumb_title": "Departs",
+        },
+    )
 
 
-    def get_queryset(self):
-        return Departure.objects.select_related('trip', 'bus').order_by('date_depart')
+@staff_member_required(login_url="accounts:login")
+def depart_create(request):
+    if request.method == "POST":
+        form = DepartForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Depart cree avec succes.")
+            return redirect("dashboard:depart_list")
+    else:
+        form = DepartForm()
 
-class DepartureCreateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , CreateView):
-    model = Departure
-    form_class = DepartureAdminForm
-    template_name = 'dashboard/departure_form.html'
-    active_tab_value ='departures'
-    breadcrumb_title = 'Departs > Ajouter Departs'
-    success_url = reverse_lazy('dashboard:departure_list')
+    return render(
+        request,
+        "dashboard/depart_form.html",
+        {
+            "form": form,
+            "active_tab": "departures",
+            "breadcrumb_title": "Departs > Nouveau depart",
+        },
+    )
 
-class DepartureUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , UpdateView):
-    model = Departure
-    form_class = DepartureAdminForm
-    template_name = 'dashboard/departure_form.html'
-    active_tab_value ='departures'
-    breadcrumb_title = 'Departs > Modifier Departs'
-    success_url = reverse_lazy('dashboard:departure_list')
 
-class DepartureDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , DeleteView):
-    model = Departure
-    template_name = 'dashboard/departure_confirm_delete.html'
-    active_tab_value ='departures'
-    breadcrumb_title = 'Departs > Suppression Departs'
-    success_url = reverse_lazy('dashboard:departure_list')
+@staff_member_required(login_url="accounts:login")
+def depart_edit(request, pk):
+    depart = get_object_or_404(Depart, pk=pk)
+
+    if request.method == "POST":
+        form = DepartForm(request.POST, instance=depart)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Depart modifie avec succes.")
+            return redirect("dashboard:depart_list")
+    else:
+        form = DepartForm(instance=depart)
+
+    return render(
+        request,
+        "dashboard/depart_form.html",
+        {
+            "form": form,
+            "object": depart,
+            "active_tab": "departures",
+            "breadcrumb_title": "Departs > Modifier depart",
+        },
+    )
+
+
+@staff_member_required(login_url="accounts:login")
+def depart_delete(request, pk):
+    depart = get_object_or_404(Depart, pk=pk)
+
+    if request.method == "POST":
+        depart.delete()
+        messages.success(request, "Depart supprime.")
+        return redirect("dashboard:depart_list")
+
+    return render(
+        request,
+        "dashboard/depart_confirm_delete.html",
+        {
+            "object": depart,
+            "active_tab": "departures",
+            "breadcrumb_title": "Departs > Suppression depart",
+        },
+    )
 
 # Consultation des Messages clients
 class MessageListView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , ListView):
@@ -374,10 +477,11 @@ L'equipe Gareci""",
             )
         except Exception as e:
             print(f"Erreur d'envoi d'email: {e}")  # Pour debug
-            
+
+        messages.success(self.request, "Reponse envoyee avec succes.")
         return super().form_valid(form)
 
-class MessageDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , DeleteView):
+class MessageDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin, DeleteSuccessMessageMixin, DeleteView):
     model = ContactMessage
     template_name = 'dashboard/message_confirm_delete.html'
     active_tab_value ='messages'
@@ -391,11 +495,11 @@ class ReservationAdminListView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixi
     active_tab_value ='reservations'
     breadcrumb_title = 'Reservations '
     context_object_name = 'reservations'
-    ordering = ['-booked_at']
+    ordering = ['-created_at']
 
-class ReservationAdminUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , UpdateView):
+class ReservationAdminUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin, UpdateSuccessMessageMixin, UpdateView):
     model = Reservation
-    fields = ['status']
+    fields = ['statut', 'utilisateur', 'date_voyage', 'depart', 'nombre_places', 'prix_total', 'paiement']
     template_name = 'dashboard/reservation_form.html'
     active_tab_value ='reservations'
     breadcrumb_title = 'Reservations > Modifier Reservations'
@@ -403,7 +507,7 @@ class ReservationAdminUpdateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMi
     def get_success_url(self):
         return reverse_lazy('dashboard:reservation_list')
 
-class ReservationAdminDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , DeleteView):
+class ReservationAdminDeleteView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin, DeleteSuccessMessageMixin, DeleteView):
     model = Reservation
     template_name = 'dashboard/reservation_confirm_delete.html'
     active_tab_value ='reservations'
@@ -414,7 +518,7 @@ class ReservationAdminConfirmView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbM
     active_tab_value ='departures'
     def post(self, request, pk, *args, **kwargs):
         reservation = get_object_or_404(Reservation, pk=pk)
-        reservation.status = ReservationStatus.CONFIRMEE
+        reservation.statut = ReservationStatus.CONFIRMEE
         reservation.save()
         return redirect('dashboard:reservation_list')
 
@@ -433,26 +537,26 @@ class DashboardView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , Templat
         context['total_users'] = CustomUser.objects.count()
         
         # Departs a venir (sans limite de 7 jours) avec statistiques
-        upcoming_departures = Departure.objects.select_related(
+        upcoming_departures = Depart.objects.select_related(
             'trip', 'bus'
         ).prefetch_related(
-            'reservation_set'
+            'reservations'
         ).filter(
-            date_depart__date__gte=today,
-        ).order_by('date_depart')
+            actif=True,
+        ).order_by('heure_depart')
 
         context['upcoming_trips'] = upcoming_departures.count()
         
         # Liste complete des departs pour le tableau principal
-        context['object_list'] = Departure.objects.select_related('trip', 'bus').all().order_by('-date_depart')
+        context['object_list'] = Depart.objects.select_related('trip', 'bus').all().order_by('heure_depart')
         # Reservations recentes (10 dernieres)
         recent_reservations = Reservation.objects.select_related(
-            'user',
-            'departure__trip',
-            'departure__bus'
+            'utilisateur',
+            'depart__trip',
+            'depart__bus'
         ).filter(
-            status__in=[ReservationStatus.EN_ATTENTE_VALIDATION, ReservationStatus.VALIDEE, ReservationStatus.CONFIRMEE]  # Uniquement les reservations actives
-        ).order_by('-booked_at')[:10]
+            statut__in=[ReservationStatus.EN_ATTENTE, ReservationStatus.CONFIRMEE]  # Uniquement les reservations actives
+        ).order_by('-created_at')[:10]
         context['recent_reservations'] = recent_reservations
         # Messages recents (5 derniers sans reponse)
         recent_messages = ContactMessage.objects.filter(
@@ -464,3 +568,63 @@ class DashboardView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , Templat
 def user_list(request):
     # Logique pour afficher la liste des utilisateurs
     return render(request, 'gareci_admin/user_list.html')
+
+@staff_member_required
+def reservation_list(request):
+    reservations = Reservation.objects.filter(
+        statut__in=[
+            ReservationStatus.EN_ATTENTE,
+            ReservationStatus.CONFIRMEE,
+        ]
+    ).select_related(
+        'depart__trip__arret_depart__ville',
+        'depart__trip__arret_arrivee__ville',
+        'depart__bus__categorie',
+        'utilisateur',
+    ).order_by('date_voyage', 'depart__heure_depart')
+
+    reservations_par_date = {}
+    for resa in reservations:
+        date = resa.date_voyage
+        if date not in reservations_par_date:
+            reservations_par_date[date] = []
+        reservations_par_date[date].append(resa)
+
+    contexte_dates = []
+    for date in sorted(reservations_par_date.keys()):
+        resas = reservations_par_date[date]
+        contexte_dates.append({
+            'date':          date,
+            'reservations':  resas,
+            'nb_confirmees': sum(
+                1 for r in resas
+                if r.statut == ReservationStatus.CONFIRMEE
+            ),
+            'nb_en_attente': sum(
+                1 for r in resas
+                if r.statut == ReservationStatus.EN_ATTENTE
+            ),
+            'recettes':      sum(
+                r.prix_total for r in resas
+                if r.statut == ReservationStatus.CONFIRMEE
+            ),
+        })
+
+    return render(request, 'dashboard/reservation_list.html', {
+        'dates': contexte_dates,
+    })
+
+@staff_member_required
+def admin_voir_billet(request, reservation_id):
+    from reservations.ticket import generer_billet_pdf
+    reservation = get_object_or_404(
+        Reservation,
+        id=reservation_id,
+        statut=ReservationStatus.CONFIRMEE
+    )
+    pdf_bytes = generer_billet_pdf(reservation)
+    response  = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = (
+        f'inline; filename="billet_{reservation.reference}.pdf"'
+    )
+    return response

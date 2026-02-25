@@ -1,0 +1,64 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Liste des departs{% endblock %}
+{% block content %}
+
+<div class="departures-container">
+    <div class="departures-header">
+        <h2><i class="fas fa-bus"></i> Liste des departs</h2>
+        <a href="{% url 'dashboard:depart_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nouveau depart
+        </a>
+    </div>
+
+    <table class="departures-table">
+        <thead>
+            <tr>
+                <th>Trajet</th>
+                <th>Depart</th>
+                <th>Arrivee</th>
+                <th>Bus</th>
+                <th>Categorie</th>
+                <th>Prix</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for depart in departs %}
+            <tr>
+                <td>{{ depart.trip.arret_depart.ville.nom }} -> {{ depart.trip.arret_arrivee.ville.nom }}</td>
+                <td class="datetime">{{ depart.heure_depart|time:"H:i" }}</td>
+                <td class="datetime">{{ depart.heure_arrivee|time:"H:i" }}</td>
+                <td>{{ depart.bus.immatriculation }}</td>
+                <td>{{ depart.bus.categorie.nom|default:"-" }}</td>
+                <td class="price">{{ depart.prix }} FCFA</td>
+                <td>
+                    {% if depart.actif %}
+                    <span class="status-badge status-active">Actif</span>
+                    {% else %}
+                    <span class="status-badge status-inactive">Inactif</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <a href="{% url 'dashboard:depart_edit' depart.pk %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                        <a href="{% url 'dashboard:depart_delete' depart.pk %}" class="btn btn-sm btn-danger">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="empty-state">
+                    <i class="fas fa-bus"></i>
+                    <p>Aucun depart enregistre</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

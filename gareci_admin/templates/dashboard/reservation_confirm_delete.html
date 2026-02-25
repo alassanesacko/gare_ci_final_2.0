@@ -1,50 +1,32 @@
 {% extends 'dashboard/dashboard_base.html' %}
-{% block title %}Supprimer une réservation{% endblock %}
+{% block title %}Supprimer une reservation{% endblock %}
 {% block content %}
-
-
 <div class="delete-container">
     <div class="delete-header">
         <i class="fas fa-exclamation-triangle"></i>
         <h2>Confirmer la suppression</h2>
     </div>
-    
+
     <div class="confirmation-message">
-        <p>Vous êtes sur le point de supprimer définitivement cette réservation. Cette action est irréversible.</p>
+        <p>Vous etes sur le point de supprimer definitivement cette reservation.</p>
     </div>
-    
+
     <div class="reservation-details">
         <div class="detail-row">
-            <span class="detail-label">N° Réservation:</span>
+            <span class="detail-label">N° Reservation:</span>
             <span class="detail-value">#{{ object.id }}</span>
         </div>
         <div class="detail-row">
             <span class="detail-label">Trajet:</span>
-            <span class="detail-value">{{ object.departure.trip.origin }} → {{ object.departure.trip.destination }}</span>
+            <span class="detail-value">{{ object.depart.trip.arret_depart.ville.nom }} -> {{ object.depart.trip.arret_arrivee.ville.nom }}</span>
         </div>
         <div class="detail-row">
             <span class="detail-label">Date:</span>
-            <span class="detail-value">{{ object.departure.date|date:"l d F Y" }}</span>
+            <span class="detail-value">{{ object.date_voyage|date:"l d F Y" }}</span>
         </div>
         <div class="detail-row">
             <span class="detail-label">Heure:</span>
-            <span class="detail-value">{{ object.departure.time|time:"H:i" }}</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Passager:</span>
-            <span class="detail-value">{{ object.user.get_full_name|default:object.user.username }}</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Statut:</span>
-            <span class="detail-value">
-                {% if object.status == 'P' %}
-                    <span style="color: #d39e00;">En attente</span>
-                {% elif object.status == 'C' %}
-                    <span style="color: #28a745;">Confirmée</span>
-                {% elif object.status == 'X' %}
-                    <span style="color: #dc3545;">Annulée</span>
-                {% endif %}
-            </span>
+            <span class="detail-value">{{ object.heure_depart|time:"H:i" }}</span>
         </div>
     </div>
 
@@ -60,18 +42,4 @@
         </div>
     </form>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Ajout d'une confirmation supplémentaire pour éviter les suppressions accidentelles
-        const deleteForm = document.querySelector('form');
-        if (deleteForm) {
-            deleteForm.addEventListener('submit', function(e) {
-                if (!confirm('Êtes-vous absolument sûr de vouloir supprimer cette réservation ? Cette action ne peut pas être annulée.')) {
-                    e.preventDefault();
-                }
-            });
-        }
-    });
-</script>
 {% endblock %}

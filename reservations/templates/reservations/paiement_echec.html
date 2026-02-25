@@ -3,10 +3,7 @@
 {% block content %}
 <div class="panel error">
   <h2>✘ Paiement échoué</h2>
-  <p>Le paiement a échoué. Vous pouvez réessayer.</p>
-  <p>
-    <a href="{% url 'reservations:paiement' reservation.id %}" class="btn btn-primary">Réessayer le paiement</a>
-  </p>
-  <p><a href="{% url 'reservations:list' %}">Mes réservations</a></p>
+  <p>Votre paiement n'a pas pu être validé.<br>Veuillez réessayer ou choisir un autre moyen.</p>
+  <a href="{% url 'reservations:list' %}" class="btn">Retour à mes réservations</a>
 </div>
 {% endblock %}

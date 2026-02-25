@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Contact - GareCI{% endblock %}
+
+{% block content %}
+<section class="contact-page">
+    <div class="contact-grid">
+        <div class="contact-form-wrap">
+            <h1><i class="fas fa-envelope"></i> Contactez-nous</h1>
+            <p class="contact-subtitle">Une question sur votre voyage ? Ecrivez-nous.</p>
+
+            {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }}">
+                    <i class="fas fa-check-circle"></i>
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" class="auth-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_nom_complet">Nom complet</label>
+                    <input type="text" id="id_nom_complet" name="nom_complet" value="{{ form_data.nom_complet }}" required>
+                    {% if errors.nom_complet %}<div class="field-error">{{ errors.nom_complet }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_email">Email</label>
+                    <input type="email" id="id_email" name="email" value="{{ form_data.email }}" required>
+                    {% if errors.email %}<div class="field-error">{{ errors.email }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_sujet">Sujet</label>
+                    <input type="text" id="id_sujet" name="sujet" value="{{ form_data.sujet }}" required>
+                    {% if errors.sujet %}<div class="field-error">{{ errors.sujet }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_message">Message</label>
+                    <textarea id="id_message" name="message" rows="6" required>{{ form_data.message }}</textarea>
+                    {% if errors.message %}<div class="field-error">{{ errors.message }}</div>{% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-primary">Envoyer</button>
+            </form>
+        </div>
+
+        <aside class="contact-info-wrap">
+            <h2>Coordonnees</h2>
+            <div class="contact-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <div>
+                    <strong>Adresse</strong>
+                    <p>Gare principale d'Adjame, Abidjan, Cote d'Ivoire</p>
+                </div>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-phone"></i>
+                <div>
+                    <strong>Telephone</strong>
+                    <p>+225 00 00 00 00</p>
+                </div>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-at"></i>
+                <div>
+                    <strong>Email</strong>
+                    <p>contact@gareci.ci</p>
+                </div>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-clock"></i>
+                <div>
+                    <strong>Horaires</strong>
+                    <p>Lun - Sam : 06h00 - 21h00</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+</section>
+
+<style>
+.contact-page {
+    margin: 16px 0 32px;
+}
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 24px;
+}
+.contact-form-wrap,
+.contact-info-wrap {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: var(--shadow-default);
+    padding: 24px;
+}
+.contact-form-wrap h1 {
+    font-size: 1.8rem;
+    margin-bottom: 4px;
+}
+.contact-form-wrap h1 i {
+    color: var(--primary-color);
+}
+.contact-subtitle {
+    color: #666;
+    margin-bottom: 18px;
+}
+.contact-info-wrap h2 {
+    margin-bottom: 14px;
+}
+.contact-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.contact-item:last-child {
+    border-bottom: none;
+}
+.contact-item i {
+    color: var(--primary-color);
+    width: 20px;
+    margin-top: 4px;
+}
+.contact-item p {
+    color: #555;
+    margin: 2px 0 0;
+}
+@media (max-width: 900px) {
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

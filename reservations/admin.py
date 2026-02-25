@@ -10,10 +10,10 @@ class ContactMessageAdmin(admin.ModelAdmin):
 
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'departure', 'status', 'booked_at')
-    search_fields = ('user__username', 'departure__trip__origin', 'departure__trip__destination')
-    list_filter = ('status', 'booked_at')
-    readonly_fields = ('booked_at',)
+    list_display = ("id", "utilisateur", "depart", "date_voyage", "statut", "created_at")
+    search_fields = ("utilisateur__username", "depart__trip__origin", "depart__trip__destination")
+    list_filter = ('statut', 'created_at')
+    readonly_fields = ('created_at',)
 
 
 @admin.register(Ticket)

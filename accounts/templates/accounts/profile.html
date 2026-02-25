@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Mon profil{% endblock %}
+
+{% block content %}
+
+<div class="profile-modern-container">
+    <div class="profile-modern-card">
+        <div class="profile-modern-header">
+            <div class="profile-modern-avatar">
+                <i class="fas fa-user-circle"></i>
+                <span class="profile-modern-initial">{{ request.user.username|slice:":1"|upper }}</span>
+            </div>
+            <div class="profile-modern-header-info">
+                <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
+                <div class="profile-modern-meta"><i class="fas fa-envelope"></i> {{ request.user.email|default:"-" }}</div>
+                <div class="profile-modern-meta"><i class="fas fa-phone"></i> {{ request.user.phone|default:"-" }}</div>
+                <div class="profile-modern-meta"><i class="fas fa-calendar-alt"></i> Inscrit le {{ request.user.date_joined|date:"d/m/Y" }}</div>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="profile-modern-stats">
+            <div class="profile-modern-stat profile-modern-stat-voyages">
+                <div class="profile-modern-stat-label"><i class="fas fa-bus"></i> Voyages effectués</div>
+                <div class="profile-modern-stat-value">{{ nb_voyages }}</div>
+            </div>
+            <div class="profile-modern-stat profile-modern-stat-depense">
+                <div class="profile-modern-stat-label"><i class="fas fa-wallet"></i> Total dépensé</div>
+                <div class="profile-modern-stat-value">{{ total_depense|floatformat:0 }} FCFA</div>
+            </div>
+            <div class="profile-modern-stat profile-modern-stat-villes">
+                <div class="profile-modern-stat-label"><i class="fas fa-map-marker-alt"></i> Villes visitées</div>
+                <div class="profile-modern-stat-value">{{ nb_villes }}</div>
+            </div>
+        </div>
+
+        <!-- Section modification infos -->
+        <section class="profile-section">
+            <h3 class="profile-section-title"><i class="fas fa-user-edit"></i> Modifier mes informations</h3>
+            <form method="post" action="{% url 'accounts:edit_profile' %}" class="profile-modern-form">
+                {% csrf_token %}
+                <div class="profile-modern-form-grid">
+                    <div class="form-group">
+                        <label for="id_first_name"><i class="fas fa-user"></i> Prénom</label>
+                        {{ edit_form.first_name }}
+                        {% if edit_form.first_name.errors %}<div class="field-error">{{ edit_form.first_name.errors }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_last_name"><i class="fas fa-user"></i> Nom</label>
+                        {{ edit_form.last_name }}
+                        {% if edit_form.last_name.errors %}<div class="field-error">{{ edit_form.last_name.errors }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_phone"><i class="fas fa-phone"></i> Téléphone</label>
+                        {{ edit_form.phone }}
+                        {% if edit_form.phone.errors %}<div class="field-error">{{ edit_form.phone.errors }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_email"><i class="fas fa-envelope"></i> Email</label>
+                        {{ edit_form.email }}
+                        {% if edit_form.email.errors %}<div class="field-error">{{ edit_form.email.errors }}</div>{% endif %}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary profile-modern-btn">Enregistrer</button>
+            </form>
+        </section>
+
+    </div>
+</div>
+
+     
+    </div>
+</div>
+{% endblock %}

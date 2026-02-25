@@ -1,14 +1,35 @@
+
 {% extends 'base.html' %}
-{% block title %}Paiement réussi{% endblock %}
+{% block title %}Paiement confirmé{% endblock %}
 {% block content %}
-<div class="panel success">
-  <h2>✔ Paiement réussi</h2>
-  <p>Votre paiement a été accepté.</p>
-  {% if request.user and request.user.is_authenticated %}
-    <p>Référence de réservation : <strong>{{ request.GET.ref|default:'' }}</strong></p>
-  {% endif %}
-  <p>Référence de paiement : <strong>{{ request.GET.pay_ref|default:'' }}</strong></p>
-  <p><a href="{% url 'reservations:download_ticket' request.GET.res_id %}">Télécharger le billet PDF</a></p>
-  <p><a href="{% url 'reservations:list' %}">Mes réservations</a></p>
+<div class="paiement-modern-container">
+  <div class="paiement-modern-card paiement-modern-success">
+    <div class="paiement-modern-header paiement-modern-header-success">
+      <i class="fas fa-check-circle"></i>
+      <h2>Paiement confirmé !</h2>
+    </div>
+    <div class="paiement-modern-recap">
+      <h3><i class="fas fa-receipt"></i> Détails de la réservation</h3>
+      <div class="paiement-modern-recap-grid">
+        <div class="recap-item"><span><i class="fas fa-hashtag"></i> Référence</span><strong>{{ reservation.reference }}</strong></div>
+        <div class="recap-item"><span><i class="fas fa-calendar-alt"></i> Date</span><strong>{{ reservation.date_voyage|date:'l d F Y' }}</strong></div>
+        <div class="recap-item"><span><i class="fas fa-route"></i> Trajet</span><strong>{{ reservation.depart.trip.arret_depart.ville.nom }} → {{ reservation.depart.trip.arret_arrivee.ville.nom }}</strong></div>
+        <div class="recap-item"><span><i class="fas fa-clock"></i> Départ</span><strong>{{ reservation.heure_depart|time:'H:i' }}</strong></div>
+        <div class="recap-item recap-total"><span><i class="fas fa-wallet"></i> Montant payé</span><strong>{{ reservation.prix_total }} FCFA</strong></div>
+      </div>
+    </div>
+    <div class="paiement-modern-actions">
+      <a href="{% url 'reservations:telecharger_billet' reservation.id %}" class="btn btn-primary paiement-modern-btn">
+        <i class="fas fa-file-download"></i> Télécharger mon billet PDF
+      </a>
+      <a href="{% url 'reservations:list' %}" class="btn btn-outline paiement-modern-btn paiement-modern-btn-cancel">
+        <i class="fas fa-list"></i> Voir mes réservations
+      </a>
+    </div>
+    <div class="paiement-modern-note">
+      <i class="fas fa-info-circle"></i>
+      <span>Un e-mail contenant votre billet a également été envoyé à votre adresse.</span>
+    </div>
+  </div>
 </div>
 {% endblock %}

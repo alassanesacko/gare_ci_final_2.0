@@ -1,48 +1,36 @@
 {% extends 'base.html' %}
-{% block title %}Paiement - {{ reservation.reference|default:reservation.id }}{% endblock %}
+{% block title %}Paiement - {{ reservation.reference }}{% endblock %}
+
 {% block content %}
-<h2>Paiement de la réservation</h2>
-<div class="panel">
-  <h3>Récapitulatif</h3>
-  <p><strong>Trajet :</strong> {{ reservation.departure.trip.ville_depart.nom }} → {{ reservation.departure.trip.ville_arrivee.nom }}</p>
-  <p><strong>Date & heure :</strong> {{ reservation.departure.date_depart|date:"d/m/Y H:i" }}</p>
-  <p><strong>Nombre de places :</strong> {{ reservation.nombre_places }}</p>
-  <p><strong>Prix total :</strong> {{ reservation.prix_total }} FCFA</p>
-  <p><strong>Référence :</strong> {{ reservation.reference }}</p>
+<div class="paiement-modern-container">
+    <div class="paiement-modern-card">
+        <div class="paiement-modern-header">
+            <i class="fas fa-credit-card"></i>
+            <h2>Paiement de la réservation</h2>
+        </div>
+        <div class="paiement-modern-recap">
+            <h3><i class="fas fa-receipt"></i> Récapitulatif</h3>
+            <div class="paiement-modern-recap-grid">
+                <div class="recap-item"><span><i class="fas fa-hashtag"></i> Référence</span><strong>{{ reservation.reference }}</strong></div>
+                <div class="recap-item"><span><i class="fas fa-calendar-alt"></i> Date voyage</span><strong>{{ reservation.date_voyage|date:'l d F Y' }}</strong></div>
+                <div class="recap-item"><span><i class="fas fa-route"></i> Trajet</span><strong>{{ reservation.depart.trip.arret_depart.ville.nom }} → {{ reservation.depart.trip.arret_arrivee.ville.nom }}</strong></div>
+                <div class="recap-item"><span><i class="fas fa-clock"></i> Départ</span><strong>{{ reservation.heure_depart|time:'H:i' }} → {{ reservation.heure_arrivee|time:'H:i' }}</strong></div>
+                <div class="recap-item"><span><i class="fas fa-users"></i> Places</span><strong>{{ reservation.nombre_places }}</strong></div>
+                <div class="recap-item recap-total"><span><i class="fas fa-calculator"></i> Total</span><strong>{{ reservation.prix_total }} FCFA</strong></div>
+            </div>
+        </div>
+        <div class="paiement-modern-actions">
+            <form method="POST" action="{% url 'reservations:traiter_paiement' reservation.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="payer">
+                <button type="submit" class="btn btn-primary paiement-modern-btn">
+                    <i class="fas fa-check-circle"></i> Payer {{ reservation.prix_total }} FCFA
+                </button>
+            </form>
+            <a href="{% url 'reservations:annuler' reservation.id %}" class="btn btn-outline paiement-modern-btn paiement-modern-btn-cancel">
+                <i class="fas fa-times"></i> Annuler la réservation
+            </a>
+        </div>
+    </div>
 </div>
-
-<div class="panel">
-  <h3>Simulation de paiement</h3>
-  <p>Cette page simule un flux de paiement pour les tests. Choisissez une action :</p>
-  <form method="post" action="{% url 'reservations:traiter_paiement' reservation.id %}">
-    {% csrf_token %}
-    <input type="hidden" name="action" id="action" value="">
-    <button type="button" class="btn btn-success" onclick="document.getElementById('action').value='payer'; this.form.submit();">✔ Simuler un paiement réussi</button>
-    <button type="button" class="btn btn-danger" onclick="document.getElementById('action').value='echouer'; this.form.submit();">✘ Simuler un échec de paiement</button>
-  </form>
-
-  <p style="margin-top:12px; color:#666">Temps restant pour payer : <span id="countdown"></span></p>
-</div>
-
-<script>
-// Countdown to reservation.expires_at
-(function(){
-  var expires = new Date("{{ reservation.expires_at|date:'c' }}");
-  var countdownEl = document.getElementById('countdown');
-  function update(){
-    var now = new Date();
-    var diff = Math.floor((expires - now)/1000);
-    if(diff<=0){
-      window.location.href = "{% url 'reservations:paiement_echec' %}";
-      return;
-    }
-    var h = Math.floor(diff/3600); diff%=3600;
-    var m = Math.floor(diff/60); var s = diff%60;
-    countdownEl.textContent = (h>0? (h+':') : '') + (m<10? '0'+m : m) + ':' + (s<10? '0'+s : s);
-  }
-  update();
-  setInterval(update,1000);
-})();
-</script>
-
 {% endblock %}
