@@ -9,6 +9,7 @@ class Conducteur(models.Model):
 		('DE', 'DE'),
 	]
 	STATUT = [
+		
 		('ACTIF', 'Actif'),
 		('CONGE', 'En congé'),
 		('SUSPENDU', 'Suspendu'),
@@ -25,6 +26,7 @@ class Conducteur(models.Model):
 	date_expiration_permis = models.DateField(null=True, blank=True)
 	statut = models.CharField(max_length=10, choices=STATUT, default='ACTIF')
 	photo = models.ImageField(upload_to='conducteurs/', null=True, blank=True)
+	bus = models.OneToOneField('trips.Bus', on_delete=models.SET_NULL, null=True, blank=True, related_name='conducteur')
 
 	class Meta:
 		verbose_name = 'Conducteur'

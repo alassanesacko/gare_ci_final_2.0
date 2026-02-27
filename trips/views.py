@@ -10,6 +10,8 @@ def home(request):
     """Page d'accueil publique (client) avec formulaire de recherche."""
     villes = Ville.objects.order_by("nom")
     today = timezone.localdate()
+    # Récupérer les trois premiers départs actifs, triés par heure de départ
+    popular_departs = Depart.objects.filter(actif=True).select_related("trip", "trip__ville_depart", "trip__ville_arrivee").order_by("heure_depart")[:3]
     return render(
         request,
         "trips/home.html",
@@ -17,6 +19,14 @@ def home(request):
             "villes": villes,
             "today": today,
             "active_tab": "home",
+            "popular_trips": [
+                {
+                    "ville_depart": depart.trip.ville_depart,
+                    "ville_arrivee": depart.trip.ville_arrivee,
+                    "price": depart.prix,
+                }
+                for depart in popular_departs
+            ],
         },
     )
 

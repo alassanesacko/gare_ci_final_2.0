@@ -1,96 +1,197 @@
 {% extends 'dashboard/dashboard_base.html' %}
-{% block title %}📋 Réservations par date de voyage{% endblock %}
+{% load static %}
+
+{% block title %}Réservations{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+    href="{% static 'css/gareci_admin/reservation_list.css' %}">
+{% endblock %}
+
 {% block content %}
-<!-- ACCORDÉON PAR DATE DE VOYAGE -->
-{% for item in dates %}
-<div class="accordion-item" id="date-{{ item.date|date:'Y-m-d' }}">
-  <div class="accordion-header" onclick="toggleAccordion('date-{{ item.date|date:'Y-m-d' }}')">
+<!-- EN-TÊTE DE PAGE -->
+<div class="page-header">
+  <h1>📋 Réservations par date de voyage</h1>
+  <span class="total-badge">
+    {{ dates|length }} date(s) •
+    {% with total=0 %}
+      {{ dates|length }} groupe(s)
+    {% endwith %}
+  </span>
+</div>
+
+<!-- SI AUCUNE RÉSERVATION -->
+{% if not dates %}
+<div class="empty-state">
+  <p>🎫 Aucune réservation en cours.</p>
+</div>
+
+{% else %}
+
+<!-- ACCORDÉONS -->
+{% for item in dates|dictsortreversed:'date' %}
+<div class="accordion-item"
+   id="accordion-{{ item.date|date:'Y-m-d' }}">
+
+  <!-- ═══ EN-TÊTE DE L'ACCORDÉON ═══ -->
+  <div class="accordion-header"
+     onclick="toggleAccordion('{{ item.date|date:'Y-m-d' }}')">
+
+    <!-- Date -->
     <div class="accordion-left">
       <span class="accordion-icon">📅</span>
-      <span class="accordion-date">{{ item.date|date:"l d F Y" }}</span>
+      <span class="accordion-date">
+        {{ item.date|date:"l d F Y" }}
+      </span>
+      <span class="accordion-count">
+        ({{ item.nb_total }} réservation(s))
+      </span>
     </div>
+
+    <!-- Badges de statistiques -->
     <div class="accordion-badges">
       {% if item.nb_confirmees %}
-      <span class="badge badge-vert">✅ {{ item.nb_confirmees }} confirmée(s)</span>
+      <span class="badge badge-vert">
+        ✅ {{ item.nb_confirmees }} confirmée(s)
+      </span>
       {% endif %}
+
       {% if item.nb_en_attente %}
-      <span class="badge badge-orange">⏳ {{ item.nb_en_attente }} en attente</span>
+      <span class="badge badge-orange">
+        ⏳ {{ item.nb_en_attente }} en attente
+      </span>
       {% endif %}
-      <span class="badge badge-gris">💰 {{ item.recettes }} FCFA</span>
+
+      {% if item.recettes %}
+      <span class="badge badge-bleu">
+        💰 {{ item.recettes }} FCFA
+      </span>
+      {% endif %}
     </div>
-    <span class="accordion-arrow" id="arrow-{{ item.date|date:'Y-m-d' }}">▼</span>
+
+    <!-- Flèche -->
+    <span class="accordion-arrow"
+        id="arrow-{{ item.date|date:'Y-m-d' }}">
+      ▼
+    </span>
   </div>
-  <div class="accordion-body" id="body-{{ item.date|date:'Y-m-d' }}">
+
+  <!-- ═══ CORPS DE L'ACCORDÉON ═══ -->
+  <div class="accordion-body"
+     id="body-{{ item.date|date:'Y-m-d' }}">
+
     <table class="table-reservations">
       <thead>
         <tr>
           <th>Référence</th>
           <th>Client</th>
-          <th>Email</th>
           <th>Trajet</th>
-          <th>Départ</th>
+          <th>Heure départ</th>
+          <th>Heure arrivée</th>
           <th>Places</th>
           <th>Total</th>
-          <th>Date réservation</th>
-          <th>Moyen paiement</th>
           <th>Statut</th>
-          <th>Billet</th>
+          
         </tr>
       </thead>
       <tbody>
         {% for resa in item.reservations %}
         <tr>
-          <td><code>{{ resa.reference }}</code></td>
+          <!-- Référence -->
           <td>
-            <strong>{{ resa.utilisateur.get_full_name|default:resa.utilisateur.username }}</strong><br>
-            <small>{{ resa.utilisateur.phone }}</small>
+            <code class="reference">
+              {{ resa.reference }}
+            </code>
           </td>
-          <td>{{ resa.utilisateur.email }}</td>
-          <td>{{ resa.depart.trip.arret_depart.ville }} → {{ resa.depart.trip.arret_arrivee.ville }}</td>
-          <td>{{ resa.depart.heure_depart|time:"H:i" }} → {{ resa.depart.heure_arrivee|time:"H:i" }}</td>
+
+          <!-- Client -->
+          <td>
+            <span class="client-nom">
+              {{ resa.utilisateur.get_full_name|default:resa.utilisateur.username }}
+            </span>
+            <br>
+            <small class="client-tel">
+              {{ resa.utilisateur.phone|default:"—" }}
+            </small>
+          </td>
+
+          <!-- Trajet -->
+          <td>
+            {{ resa.depart.trip.arret_depart.ville }}
+            <span class="fleche">→</span>
+            {{ resa.depart.trip.arret_arrivee.ville }}
+          </td>
+
+          <!-- Heure départ -->
+          <td>
+            {{ resa.depart.heure_depart|time:"H:i" }}
+          </td>
+
+          <!-- Heure arrivée -->
+          <td>
+            {{ resa.depart.heure_arrivee|time:"H:i" }}
+          </td>
+
+          <!-- Places -->
           <td>{{ resa.nombre_places }}</td>
+
+          <!-- Total -->
           <td>{{ resa.prix_total }} FCFA</td>
-          <td>{{ resa.created_at|date:"d/m/Y H:i" }}</td>
-          <td>{% if resa.paiement %}{{ resa.paiement.moyen }}{% else %}—{% endif %}</td>
+
+          <!-- Statut -->
           <td>
             {% if resa.statut == 'CONFIRMEE' %}
-              <span class="badge badge-vert">✅ Confirmée</span>
+              <span class="badge badge-vert">
+                ✅ Confirmée
+              </span>
             {% elif resa.statut == 'EN_ATTENTE' %}
-              <span class="badge badge-orange">⏳ En attente</span>
-            {% else %}
-              <span class="badge badge-gris">—</span>
+              <span class="badge badge-orange">
+                ⏳ En attente
+              </span>
             {% endif %}
           </td>
-          <td>
-            {% if resa.statut == 'CONFIRMEE' %}
-              <a href="{% url 'admin_voir_billet' resa.id %}" class="btn-sm btn-gris" target="_blank">📄 Voir</a>
-            {% else %}—{% endif %}
-          </td>
+
+          
         </tr>
         {% endfor %}
       </tbody>
     </table>
+
   </div>
 </div>
-{% empty %}
-<div class="empty-state">Aucune réservation pour le moment.</div>
 {% endfor %}
+
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
 <script>
+/* ═══════════════════════════════════════
+   GESTION DES ACCORDÉONS
+═══════════════════════════════════════ */
+
 function toggleAccordion(dateId) {
-    const body  = document.getElementById('body-'  + dateId);
-    const arrow = document.getElementById('arrow-' + dateId);
-    const isOpen = body.style.display === 'block';
-    body.style.display = isOpen ? 'none' : 'block';
-    arrow.textContent  = isOpen ? '▼' : '▲';
+  const body  = document.getElementById('body-'  + dateId);
+  const arrow = document.getElementById('arrow-' + dateId);
+
+  if (!body || !arrow) return;
+
+  const isOpen = body.style.display === 'block';
+  body.style.display = isOpen ? 'none' : 'block';
+  arrow.textContent  = isOpen ? '▼' : '▲';
 }
-document.addEventListener('DOMContentLoaded', function() {
-    const today = new Date().toISOString().split('T')[0];
-    const bodyDuJour  = document.getElementById('body-'  + today);
-    const arrowDuJour = document.getElementById('arrow-' + today);
-    if (bodyDuJour) {
-        bodyDuJour.style.display  = 'block';
-        arrowDuJour.textContent   = '▲';
-    }
+
+/* Ouvrir automatiquement l'accordéon de la date du jour */
+document.addEventListener('DOMContentLoaded', function () {
+  const today = new Date().toISOString().split('T')[0];
+  const bodyDuJour  = document.getElementById('body-'  + today);
+  const arrowDuJour = document.getElementById('arrow-' + today);
+
+  if (bodyDuJour) {
+    bodyDuJour.style.display = 'block';
+    arrowDuJour.textContent  = '▲';
+  }
 });
 </script>
 {% endblock %}

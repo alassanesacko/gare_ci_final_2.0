@@ -43,6 +43,7 @@ from .views import (
     depart_list,
     reservation_list,
     admin_voir_billet,
+    recettes,
 )
 
 app_name = "dashboard"
@@ -83,10 +84,11 @@ urlpatterns = [
     path("messages/", MessageListView.as_view(), name="message_list"),
     path("messages/<int:pk>/reply/", MessageReplyView.as_view(), name="message_reply"),
     path("messages/<int:pk>/delete/", MessageDeleteView.as_view(), name="message_delete"),
-    path("reservations/", ReservationAdminListView.as_view(), name="reservation_list"),
+    # path("reservations/", ReservationAdminListView.as_view(), name="reservation_list"),
     path("reservations/<int:pk>/edit/", ReservationAdminUpdateView.as_view(), name="reservation_edit"),
     path("reservations/<int:pk>/delete/", ReservationAdminDeleteView.as_view(), name="reservation_delete"),
     path("reservations/<int:pk>/confirm/", ReservationAdminConfirmView.as_view(), name="reservation_confirm"),
     path('reservations/', reservation_list, name='reservation_list'),
+    path('recettes/', recettes, name='recettes'),
     path('reservations/<int:reservation_id>/billet/', admin_voir_billet, name='admin_voir_billet'),
 ]

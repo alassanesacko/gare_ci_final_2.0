@@ -62,6 +62,7 @@ class BusListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin , ListView
     template_name = 'dashboard/bus_list.html'
     active_tab_value ='buses'
     breadcrumb_title ='Liste de Bus'
+    ordering = ['-id']
     
 
 class BusCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateSuccessMessageMixin, CreateView):
@@ -93,6 +94,7 @@ class CategoryListView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , List
     template_name = 'dashboard/category_list.html'
     active_tab_value ='categories'
     breadcrumb_title = 'Categories'
+    ordering = ['-id']
 
 class CategoryCreateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin, CreateSuccessMessageMixin, CreateView):
     model = Category
@@ -125,6 +127,7 @@ class VilleListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, ListVie
     template_name = "dashboard/ville_list.html"
     active_tab_value = "villes"
     breadcrumb_title = "Villes"
+    ordering = ['-id']
 
 
 class VilleCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateSuccessMessageMixin, CreateView):
@@ -159,6 +162,7 @@ class ArretListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, ListVie
     template_name = "dashboard/arret_list.html"
     active_tab_value = "arrets"
     breadcrumb_title = "Arrets"
+    ordering = ['-id']
 
 
 class ArretCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateSuccessMessageMixin, CreateView):
@@ -193,6 +197,7 @@ class SegmentListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, ListV
     template_name = "dashboard/segment_list.html"
     active_tab_value = "segments"
     breadcrumb_title = "Segments"
+    ordering = ['-id']
 
 
 class SegmentCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateSuccessMessageMixin, CreateView):
@@ -227,11 +232,12 @@ class ConducteurListView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, Li
     template_name = 'dashboard/conducteur_list.html'
     active_tab_value = 'conducteurs'
     breadcrumb_title = 'Conducteurs'
+    ordering = ['-id']
 
 
 class ConducteurCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, CreateSuccessMessageMixin, CreateView):
     model = Conducteur
-    fields = ['nom', 'prenom', 'cin', 'telephone', 'email', 'date_embauche', 'numero_permis', 'type_permis', 'date_expiration_permis', 'statut', 'photo']
+    fields = ['nom', 'prenom', 'cin', 'telephone', 'email', 'date_embauche', 'numero_permis', 'type_permis', 'date_expiration_permis', 'statut', 'photo', 'bus']
     template_name = 'dashboard/conducteur_form.html'
     active_tab_value = 'conducteurs'
     breadcrumb_title = 'Conducteurs > Ajouter Conducteur'
@@ -240,7 +246,7 @@ class ConducteurCreateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, 
 
 class ConducteurUpdateView(StaffRequiredMixin, ActiveTabMixin, BreadcrumbMixin, UpdateSuccessMessageMixin, UpdateView):
     model = Conducteur
-    fields = ['nom', 'prenom', 'cin', 'telephone', 'email', 'date_embauche', 'numero_permis', 'type_permis', 'date_expiration_permis', 'statut', 'photo']
+    fields = ['nom', 'prenom', 'cin', 'telephone', 'email', 'date_embauche', 'numero_permis', 'type_permis', 'date_expiration_permis', 'statut', 'photo', 'bus']
     template_name = 'dashboard/conducteur_form.html'
     active_tab_value = 'conducteurs'
     breadcrumb_title = 'Conducteurs > Modifier Conducteur'
@@ -265,7 +271,7 @@ class TripListView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , ListView
         return (
             Trip.objects.select_related("ville_depart", "ville_arrivee", "arret_depart", "arret_arrivee")
             .prefetch_related("etapetrajet_set__segment__arret_depart", "etapetrajet_set__segment__arret_arrivee")
-            .order_by("nom")
+            .order_by("-id")
         )
 
 class TripCreateView(StaffRequiredMixin,ActiveTabMixin, BreadcrumbMixin , CreateView):
@@ -351,7 +357,7 @@ def depart_list(request):
             "trip__arret_arrivee__ville",
             "bus",
         )
-        .order_by("trip", "heure_depart")
+        .order_by("-heure_depart")
     )
     for depart in departs:
         depart.places_du_jour = depart.places_disponibles_pour(today)
@@ -628,3 +634,88 @@ def admin_voir_billet(request, reservation_id):
         f'inline; filename="billet_{reservation.reference}.pdf"'
     )
     return response
+
+
+from django.db.models import Sum, Count
+from datetime import timedelta
+
+@staff_member_required
+def recettes(request):
+    """
+    Affiche toutes les recettes issues des réservations CONFIRMEE.
+    Groupées par date_voyage avec total par jour et total général.
+    Filtrables par période.
+    """
+    aujourd_hui = timezone.now().date()
+
+    # Récupérer le filtre période depuis GET
+    periode = request.GET.get('periode', 'tout')
+
+    # Définir la date de début selon la période
+    if periode == 'aujourd_hui':
+        date_debut = aujourd_hui
+        date_fin   = aujourd_hui
+    elif periode == 'semaine':
+        date_debut = aujourd_hui - timedelta(days=aujourd_hui.weekday())
+        date_fin   = aujourd_hui
+    elif periode == 'mois':
+        date_debut = aujourd_hui.replace(day=1)
+        date_fin   = aujourd_hui
+    else:  # tout
+        date_debut = None
+        date_fin   = None
+
+    # Requête de base : réservations CONFIRMEE uniquement
+    qs = Reservation.objects.filter(
+        statut=ReservationStatus.CONFIRMEE
+    ).select_related(
+        'depart__trip__arret_depart__ville',
+        'depart__trip__arret_arrivee__ville',
+        'depart__bus__categorie',
+        'utilisateur',
+    ).order_by('date_voyage', 'depart__heure_depart')
+
+    # Appliquer le filtre période
+    if date_debut:
+        qs = qs.filter(date_voyage__gte=date_debut)
+    if date_fin:
+        qs = qs.filter(date_voyage__lte=date_fin)
+
+    # Grouper par date_voyage
+    reservations_par_date = {}
+    for resa in qs:
+        date = resa.date_voyage
+        if date not in reservations_par_date:
+            reservations_par_date[date] = []
+        reservations_par_date[date].append(resa)
+
+    # Construire le contexte avec stats par jour
+    jours = []
+    for date in sorted(reservations_par_date.keys(), reverse=True):
+        resas = reservations_par_date[date]
+        recette_jour = sum(r.prix_total for r in resas)
+        jours.append({
+            'date':          date,
+            'reservations':  resas,
+            'nb_billets':    len(resas),
+            'nb_places':     sum(r.nombre_places for r in resas),
+            'recette':       recette_jour,
+        })
+
+    # Recette totale sur la période
+    recette_totale = sum(j['recette'] for j in jours)
+    nb_billets_total = sum(j['nb_billets'] for j in jours)
+
+    # Total général (toutes les réservations confirmées, sans filtre de période)
+    total_general = Reservation.objects.filter(
+        statut=ReservationStatus.CONFIRMEE
+    ).aggregate(total=Sum('prix_total'))['total'] or 0
+
+    return render(request, 'dashboard/recettes.html', {
+        'jours':            jours,
+        'recette_totale':   recette_totale,
+        'nb_billets_total': nb_billets_total,
+        'periode':          periode,
+        'aujourd_hui':      aujourd_hui,
+        'total_general':    total_general,
+    })

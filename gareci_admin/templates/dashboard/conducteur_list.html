@@ -17,6 +17,7 @@
                 <th>Prénom</th>
                 <th>CIN</th>
                 <th>Téléphone</th>
+                <th>Bus</th>
                 <th>Statut</th>
                 <th>Actions</th>
             </tr>
@@ -28,6 +29,7 @@
                 <td>{{ conducteur.prenom }}</td>
                 <td>{{ conducteur.cin }}</td>
                 <td>{{ conducteur.telephone }}</td>
+                <td>{% if conducteur.bus %}{{ conducteur.bus.immatriculation }}{% else %}—{% endif %}</td>
                 <td>{{ conducteur.get_statut_display }}</td>
                 <td>
                     <div class="action-buttons">

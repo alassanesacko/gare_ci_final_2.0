@@ -57,6 +57,11 @@
                             <li><a href="{% url 'dashboard:reservation_list' %}?status=C">Confirmées</a></li>
                         </ul>
                     </li>
+                        <li class="{% if request.resolver_match.url_name == 'recettes' %}active{% endif %}">
+                            <a href="{% url 'dashboard:recettes' %}">
+                                <i class="fas fa-coins"></i> Recettes
+                            </a>
+                        </li>
                     
                     <li class="{% if active_tab == 'trips' %}active{% endif %}">
                         <a href="{% url 'dashboard:trip_list' %}">

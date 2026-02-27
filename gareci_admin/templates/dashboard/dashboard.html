@@ -29,66 +29,6 @@
     </div>
 </div>
 
-<section class="table-section">
-    <div class="section-header">
-        <h3>Reservations recentes</h3>
-        <a href="{% url 'dashboard:reservation_list' %}" class="view-all">Voir tout</a>
-    </div>
-
-    <div class="table-responsive">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Client</th>
-                    <th>Trajet</th>
-                    <th>Date depart</th>
-                    <th>Date reservation</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for reservation in recent_reservations|slice:":4" %}
-                <tr>
-                    <td>#{{ reservation.id }}</td>
-                    <td>{{ reservation.user.username }}</td>
-                    <td>{{ reservation.depart.trip.ville_depart }} → {{ reservation.depart.trip.ville_arrivee }}</td>
-                    <td>{{ reservation.date_voyage|date:'d/m/Y' }} {{ reservation.heure_depart|time:'H:i' }}</td>
-                    <td>{{ reservation.booked_at|date:'d/m/Y' }} a {{ reservation.booked_at|time:'H:i' }}</td>
-                    <td>
-                        <span class="status-badge
-                            {% if reservation.status == 'EN_ATTENTE_VALIDATION' %}pending
-                            {% elif reservation.status == 'CONFIRMEE' %}confirmed
-                            {% elif reservation.status == 'ANNULEE' %}canceled
-                            {% endif %}">
-                            {% if reservation.status == 'EN_ATTENTE_VALIDATION' %}En attente
-                            {% elif reservation.status == 'VALIDEE' %}Validee
-                            {% elif reservation.status == 'CONFIRMEE' %}Confirmee
-                            {% elif reservation.status == 'REJETEE' %}Rejetee
-                            {% elif reservation.status == 'ANNULEE' %}Annulee
-                            {% elif reservation.status == 'EXPIREE' %}Expiree
-                            {% else %}{{ reservation.status }}
-                            {% endif %}
-                        </span>
-                    </td>
-                    <td>
-                        {% if reservation.status == 'EN_ATTENTE_VALIDATION' %}
-                        <form method="post" action="{% url 'dashboard:reservation_confirm' reservation.id %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="action-btn confirm"><i class="fas fa-check"></i></button>
-                        </form>
-                        {% endif %}
-                        <a href="{% url 'dashboard:reservation_edit' reservation.id %}" class="action-btn edit"><i class="fas fa-edit"></i></a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="7">Aucune reservation recente.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</section>
 
 <div class="departures-container">
     <div class="departures-header">

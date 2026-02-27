@@ -1,0 +1,184 @@
+/* Titre page recettes orange */
+.page-header h1 {
+    color: #FF6B00;
+}
+/* ─── FILTRES ─── */
+.filtres-periode {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+.filtre {
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #555;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.filtre:hover {
+    background: #f0f0f0;
+}
+.filtre.actif {
+    background: #FF6B00;
+    color: white;
+    border-color: #FF6B00;
+}
+
+/* ─── CARTES RÉSUMÉ ─── */
+.cartes-resume {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+.carte {
+    flex: 1;
+    padding: 20px 24px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.carte-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.75;
+    margin-bottom: 8px;
+}
+.carte-valeur {
+    font-size: 26px;
+    font-weight: 700;
+}
+.carte-verte  { background: #d4edda; color: #155724; }
+.carte-bleue  { background: #cce5ff; color: #004085; }
+.carte-orange { background: #fff3cd; color: #856404; }
+
+/* ─── BLOC PAR JOUR ─── */
+.jour-bloc {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.jour-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    cursor: pointer;
+    gap: 16px;
+    transition: background 0.2s;
+}
+.jour-header:hover { background: #e9ecef; }
+.jour-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.jour-date {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a3c6e;
+}
+.badge-aujourd-hui {
+    background: #1a3c6e;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.jour-stats {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+}
+.stat {
+    font-size: 13px;
+    color: #555;
+}
+.recette-jour {
+    font-weight: 700;
+    color: #155724;
+    font-size: 14px;
+}
+.jour-arrow {
+    font-size: 11px;
+    color: #888;
+    flex-shrink: 0;
+}
+.jour-body {
+    display: none;
+    overflow-x: auto;
+    border-top: 1px solid #dee2e6;
+}
+
+/* ─── TABLEAU ─── */
+.table-recettes {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.table-recettes thead th {
+    background: #FF6B00;
+    color: white;
+    padding: 10px 16px;
+    text-align: left;
+    font-weight: 600;
+}
+.table-recettes tbody td {
+    padding: 11px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+.table-recettes tbody tr:last-child td {
+    border-bottom: none;
+}
+.table-recettes tbody tr:hover td {
+    background: #f8f9fa;
+}
+.table-recettes tfoot td {
+    padding: 10px 16px;
+    background: #f0f0f0;
+}
+.montant {
+    font-weight: 600;
+    color: #155724;
+}
+.reference {
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+.fleche {
+    color: #e67e22;
+    font-weight: bold;
+    margin: 0 4px;
+}
+
+/* ─── TOTAL GÉNÉRAL ─── */
+.total-general {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    background: #FF6B00;
+    color: white;
+    border-radius: 8px;
+    margin-top: 16px;
+}
+.total-label {
+    font-size: 15px;
+    font-weight: 600;
+}
+.total-valeur {
+    font-size: 24px;
+    font-weight: 700;
+}

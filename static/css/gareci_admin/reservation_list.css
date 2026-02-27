@@ -1,170 +1,174 @@
-/* Styles spécifiques à reservation_list.html */
+/* ─── PAGE HEADER ─── */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+.page-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a3c6e;
+    margin: 0;
+}
+.total-badge {
+    background: #e9ecef;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #555;
+}
 
-    /* Container */
-    .reservations-container {
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        padding: 20px;
-        margin-bottom: 30px;
-    }
+/* ─── EMPTY STATE ─── */
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: #aaa;
+    font-size: 16px;
+}
 
-    /* Header */
-    .reservations-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-        gap: 15px;
-    }
+/* ─── ACCORDÉON ─── */
+.accordion-item {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.2s;
+}
+.accordion-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.accordion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    cursor: pointer;
+    gap: 16px;
+    transition: background 0.2s;
+}
+.accordion-header:hover {
+    background: #e9ecef;
+}
+.accordion-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.accordion-icon {
+    font-size: 18px;
+}
+.accordion-date {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a3c6e;
+}
+.accordion-count {
+    font-size: 12px;
+    color: #888;
+}
+.accordion-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+.accordion-arrow {
+    font-size: 11px;
+    color: #888;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+}
 
-    .reservations-header h2 {
-        color: #333;
-        font-size: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 5px;
-    }
+/* ─── CORPS ACCORDÉON ─── */
+.accordion-body {
+    display: none;
+    overflow-x: auto;
+    border-top: 1px solid #dee2e6;
+}
 
-    .reservations-header h2 i {
-        color: #FF6B00;
-    }
+/* ─── TABLEAU ─── */
+.table-reservations {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.table-reservations thead th {
+    background: #FF6B00;
+    color: white;
+    padding: 11px 16px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.table-reservations tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+    color: #333;
+}
+.table-reservations tbody tr:last-child td {
+    border-bottom: none;
+}
+.table-reservations tbody tr:hover td {
+    background: #f8f9fa;
+}
 
-    /* Table */
-    .reservations-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
+/* ─── ÉLÉMENTS DANS LE TABLEAU ─── */
+.reference {
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: #333;
+}
+.client-nom {
+    font-weight: 600;
+    color: #222;
+}
+.client-tel {
+    color: #888;
+    font-size: 11px;
+}
+.fleche {
+    color: #e67e22;
+    font-weight: bold;
+    margin: 0 4px;
+}
+.no-billet {
+    color: #ccc;
+}
 
-    .reservations-table th {
-        background-color: #f8f9fa;
-        padding: 12px 15px;
-        text-align: left;
-        font-weight: 600;
-        color: #555;
-        border-bottom: 2px solid #eee;
-    }
+/* ─── BADGES ─── */
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.badge-vert   { background: #d4edda; color: #155724; }
+.badge-orange { background: #fff3cd; color: #856404; }
+.badge-bleu   { background: #cce5ff; color: #004085; }
+.badge-gris   { background: #e2e3e5; color: #383d41; }
 
-    .reservations-table td {
-        padding: 12px 15px;
-        border-bottom: 1px solid #eee;
-        vertical-align: middle;
-    }
-
-    .reservations-table tr:last-child td {
-        border-bottom: none;
-    }
-
-    .reservations-table tr:hover td {
-        background-color: rgba(255, 107, 0, 0.03);
-    }
-
-    /* Status Badge */
-    .status-badge {
-        display: inline-block;
-        padding: 5px 10px;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        font-weight: 500;
-    }
-
-    .status-pending {
-        background-color: #fff3cd;
-        color: #d39e00;
-    }
-
-    .status-confirmed {
-        background-color: #e6f7ee;
-        color: #28a745;
-    }
-
-    .status-cancelled {
-        background-color: #f8d7da;
-        color: #dc3545;
-    }
-
-    /* Buttons */
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px 12px;
-        border-radius: 4px;
-        font-weight: 500;
-        text-decoration: none;
-        font-size: 0.85rem;
-        transition: all 0.3s;
-        border: none;
-        cursor: pointer;
-    }
-
-    .btn-sm {
-        padding: 6px 10px;
-        font-size: 0.8rem;
-    }
-
-    .btn-success {
-        background-color: #28a745;
-        color: white;
-    }
-
-    .btn-success:hover {
-        background-color: #218838;
-    }
-
-    .btn-warning {
-        background-color: #ffc107;
-        color: #212529;
-    }
-
-    .btn-warning:hover {
-        background-color: #e0a800;
-    }
-
-    .btn-danger {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    .btn-danger:hover {
-        background-color: #c82333;
-    }
-
-    .btn-default {
-        background-color: #f8f9fa;
-        color: #333;
-        border: 1px solid #ddd;
-    }
-
-    .btn-default:hover {
-        background-color: #e2e6ea;
-    }
-
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 30px;
-        color: #999;
-    }
-
-    /* Action Buttons */
-    .action-buttons {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .reservations-table {
-            display: block;
-            overflow-x: auto;
-        }
-        
-        .action-buttons {
-            flex-direction: column;
-            gap: 5px;
-        }
-    }
+/* ─── BOUTON BILLET ─── */
+.btn-sm {
+    padding: 5px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: opacity 0.2s;
+}
+.btn-sm:hover { opacity: 0.85; }
+.btn-gris {
+    background: #6c757d;
+    color: white;
+}

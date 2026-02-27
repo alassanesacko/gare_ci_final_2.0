@@ -1,0 +1,180 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{% static 'css/gareci_admin/recettes.css' %}">
+{% endblock %}
+
+{% block title %}Recettes{% endblock %}
+
+{% block content %}
+
+<!-- ═══ EN-TÊTE ═══ -->
+<div class="page-header">
+    <h1>💰 Recettes</h1>
+</div>
+
+<!-- ═══ FILTRES PÉRIODE ═══ -->
+<div class="filtres-periode">
+    <a href="?periode=aujourd_hui"
+       class="filtre {% if periode == 'aujourd_hui' %}actif{% endif %}">
+        Aujourd'hui
+    </a>
+    <a href="?periode=semaine"
+       class="filtre {% if periode == 'semaine' %}actif{% endif %}">
+        Cette semaine
+    </a>
+    <a href="?periode=mois"
+       class="filtre {% if periode == 'mois' %}actif{% endif %}">
+        Ce mois
+    </a>
+    <a href="?periode=tout"
+       class="filtre {% if periode == 'tout' %}actif{% endif %}">
+        Tout
+    </a>
+</div>
+
+<!-- ═══ CARTES RÉSUMÉ ═══ -->
+<div class="stats-section" style="margin-bottom:32px;">
+    <div class="stat-card">
+        <div class="stat-icon bg-orange"><i class="fas fa-coins"></i></div>
+        <div class="stat-info">
+            <h3>{{ recette_totale }} FCFA</h3>
+            <p>Recette totale</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-ticket-alt"></i></div>
+        <div class="stat-info">
+            <h3>{{ nb_billets_total }}</h3>
+            <p>Billets vendus</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-calendar-day"></i></div>
+        <div class="stat-info">
+            <h3>{{ jours|length }}</h3>
+            <p>Jours avec ventes</p>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ CONTENU ═══ -->
+{% if not jours %}
+<div class="empty-state">
+    💸 Aucune recette sur cette période.
+</div>
+{% else %}
+    <!-- Un bloc par jour -->
+    {% for jour in jours %}
+    <div class="jour-bloc"
+         id="jour-{{ jour.date|date:'Y-m-d' }}">
+        <div class="jour-header"
+             onclick="toggleJour('{{ jour.date|date:'Y-m-d' }}')">
+            <div class="jour-left">
+                <span class="jour-date">
+                    {{ jour.date|date:"l d F Y" }}
+                </span>
+                {% if jour.date == aujourd_hui %}
+                <span class="badge-aujourd-hui">Aujourd'hui</span>
+                {% endif %}
+            </div>
+            <div class="jour-stats">
+                <span class="stat">
+                    🎫 {{ jour.nb_billets }} billet(s)
+                </span>
+                <span class="stat">
+                    💺 {{ jour.nb_places }} place(s)
+                </span>
+                <span class="stat recette-jour">
+                    💰 {{ jour.recette }} FCFA
+                </span>
+            </div>
+            <span class="jour-arrow"
+                  id="arrow-{{ jour.date|date:'Y-m-d' }}">▼</span>
+        </div>
+        <div class="jour-body"
+             id="body-{{ jour.date|date:'Y-m-d' }}">
+            <table class="table-recettes">
+                <thead>
+                    <tr>
+                        <th>Référence</th>
+                        <th>Client</th>
+                        <th>Trajet</th>
+                        <th>Départ</th>
+                        <th>Places</th>
+                        <th>Montant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for resa in jour.reservations %}
+                    <tr>
+                        <td>
+                            <code class="reference">
+                                {{ resa.reference }}
+                            </code>
+                        </td>
+                        <td>
+                            {{ resa.utilisateur.get_full_name|default:resa.utilisateur.username }}
+                        </td>
+                        <td>
+                            {{ resa.depart.trip.arret_depart.ville }}
+                            <span class="fleche">→</span>
+                            {{ resa.depart.trip.arret_arrivee.ville }}
+                        </td>
+                        <td>
+                            {{ resa.depart.heure_depart|time:"H:i" }}
+                        </td>
+                        <td>{{ resa.nombre_places }}</td>
+                        <td class="montant">
+                            {{ resa.prix_total }} FCFA
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="total-jour">
+                        <td colspan="4"></td>
+                        <td><strong>{{ jour.nb_places }} places</strong></td>
+                        <td class="montant">
+                            <strong>{{ jour.recette }} FCFA</strong>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+
+<!-- ═══ TOTAL GÉNÉRAL ═══ -->
+<div class="total-general">
+    <span class="total-label">Total général</span>
+    <span class="total-valeur" id="total-general-valeur" style="letter-spacing:2px; display:inline-flex; align-items:center;">
+        .............
+        <button class="btn-eye" onclick="toggleTotalGeneral()" style="background:none;border:none;cursor:pointer;padding:0;margin-left:8px;">
+            <i class="fas fa-eye" id="eye-icon" style="color:white;font-size:22px;"></i>
+        </button>
+    </span>
+</div>
+<script>
+function toggleTotalGeneral() {
+    const valeur = document.getElementById('total-general-valeur');
+    const icon = document.getElementById('eye-icon');
+    if (valeur.dataset.visible === 'true') {
+        valeur.childNodes[0].textContent = '.............';
+        valeur.dataset.visible = 'false';
+        icon.className = 'fas fa-eye';
+    } else {
+        valeur.childNodes[0].textContent = '{{ total_general }} FCFA';
+        valeur.dataset.visible = 'true';
+        icon.className = 'fas fa-eye-slash';
+    }
+}
+document.addEventListener('DOMContentLoaded', function () {
+    const valeur = document.getElementById('total-general-valeur');
+    valeur.dataset.visible = 'false';
+});
+</script>
+{% endblock %}
