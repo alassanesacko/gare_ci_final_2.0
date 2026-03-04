@@ -17,15 +17,18 @@
   </style>
 </head>
 <body>
+  {% for billet in billets %}
   <div class="billet">
     <div class="partie-gauche">
       <div class="titre">🚌 GareCI   BILLET DE VOYAGE</div>
-      <div class="info">Réf: {{ reference }}</div>
-      <div class="info">ABIDJAN  ────────►  BOUAKÉ</div>
+      <div class="info">Réf     : {{ billet.reference }}</div>
+      <div class="info" style="font-size:9px; color:#888;">Billet {{ billet.numero }}/{{ billet.total }}</div>
+      <div class="info">Trajet  : {{ depart.trip.arret_depart.ville }}  ────────►  {{ depart.trip.arret_arrivee.ville }}</div>
+      <div class="info">Distance: {{ distance_km|floatformat:1 }} km</div>
       <div class="info">Date    : {{ reservation.date_voyage|date:'d/m/Y' }}</div>
       <div class="info">Départ  : {{ reservation.heure_depart|time:'H:i' }}</div>
       <div class="info">Arrivée : {{ reservation.heure_arrivee|time:'H:i' }}</div>
-      <div class="info">Places  : {{ reservation.nombre_places }}</div>
+      <div class="info">Siège   : {{ billet.siege }}</div>
       <div class="info">Bus     : {{ depart.bus.categorie.nom }}</div>
       <div class="info">Passager: {{ utilisateur.get_full_name|default:utilisateur.username }}</div>
       <div class="info">Tél     : {{ utilisateur.phone }}</div>
@@ -34,10 +37,22 @@
     </div>
     <div class="partie-droite">
       <div class="qr">
-        <img src="data:image/png;base64,{{ qr_b64 }}" width="120" height="120" alt="QR Code" />
+        <img src="data:image/png;base64,{{ billet.qr_b64 }}" width="120" height="120" alt="QR Code" />
       </div>
-      <div>PAY-XXXX</div>
+      <div style="font-size:9px; opacity:0.7;">Scanner pour vérifier</div>
+      <div style="font-size:11px; opacity:0.8; margin-top:8px;">SIÈGE</div>
+      <div style="font-size:28px; font-weight:bold; line-height:1;">{{ billet.siege }}</div>
+      <div style="font-size:10px; opacity:0.7; margin-top:6px;">{{ billet.reference }}</div>
     </div>
   </div>
+  {% endfor %}
+  <style>
+    .billet {
+      page-break-after: always;
+    }
+    .billet:last-child {
+      page-break-after: avoid;
+    }
+  </style>
 </body>
 </html>

@@ -1,34 +1,47 @@
-
 {% extends 'base.html' %}
-{% block title %}Paiement confirmé{% endblock %}
+{% block title %}Paiement confirme{% endblock %}
 {% block content %}
 <div class="paiement-modern-container">
   <div class="paiement-modern-card paiement-modern-success">
     <div class="paiement-modern-header paiement-modern-header-success">
       <i class="fas fa-check-circle"></i>
-      <h2>Paiement confirmé !</h2>
+      <h2>Paiement confirme !</h2>
     </div>
     <div class="paiement-modern-recap">
-      <h3><i class="fas fa-receipt"></i> Détails de la réservation</h3>
+      <h3><i class="fas fa-receipt"></i> Details de la reservation</h3>
       <div class="paiement-modern-recap-grid">
-        <div class="recap-item"><span><i class="fas fa-hashtag"></i> Référence</span><strong>{{ reservation.reference }}</strong></div>
+        <div class="recap-item"><span><i class="fas fa-hashtag"></i> Reference</span><strong>{{ reservation.reference }}</strong></div>
         <div class="recap-item"><span><i class="fas fa-calendar-alt"></i> Date</span><strong>{{ reservation.date_voyage|date:'l d F Y' }}</strong></div>
-        <div class="recap-item"><span><i class="fas fa-route"></i> Trajet</span><strong>{{ reservation.depart.trip.arret_depart.ville.nom }} → {{ reservation.depart.trip.arret_arrivee.ville.nom }}</strong></div>
-        <div class="recap-item"><span><i class="fas fa-clock"></i> Départ</span><strong>{{ reservation.heure_depart|time:'H:i' }}</strong></div>
-        <div class="recap-item recap-total"><span><i class="fas fa-wallet"></i> Montant payé</span><strong>{{ reservation.prix_total }} FCFA</strong></div>
+        <div class="recap-item">
+          <span><i class="fas fa-route"></i> Trajet</span>
+          <strong>
+            <span class="trajet-main">{{ reservation.depart.trip.arret_depart.ville.nom }} -> {{ reservation.depart.trip.arret_arrivee.ville.nom }}</span>
+            {% with etapes=reservation.depart.trip.etapetrajet_set.all|slice:":-1" %}
+              {% if etapes %}
+                <span class="trajet-escales">
+                  {% for etape in etapes %}
+                    {{ etape.segment.arret_arrivee.ville.nom }}{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+                </span>
+              {% endif %}
+            {% endwith %}
+          </strong>
+        </div>
+        <div class="recap-item"><span><i class="fas fa-clock"></i> Depart</span><strong>{{ reservation.heure_depart|time:'H:i' }}</strong></div>
+        <div class="recap-item recap-total"><span><i class="fas fa-wallet"></i> Montant paye</span><strong>{{ reservation.prix_total }} FCFA</strong></div>
       </div>
     </div>
     <div class="paiement-modern-actions">
       <a href="{% url 'reservations:telecharger_billet' reservation.id %}" class="btn btn-primary paiement-modern-btn">
-        <i class="fas fa-file-download"></i> Télécharger mon billet PDF
+        <i class="fas fa-file-download"></i> Telecharger mon billet PDF
       </a>
       <a href="{% url 'reservations:list' %}" class="btn btn-outline paiement-modern-btn paiement-modern-btn-cancel">
-        <i class="fas fa-list"></i> Voir mes réservations
+        <i class="fas fa-list"></i> Voir mes reservations
       </a>
     </div>
     <div class="paiement-modern-note">
       <i class="fas fa-info-circle"></i>
-      <span>Un e-mail contenant votre billet a également été envoyé à votre adresse.</span>
+      <span>Un e-mail contenant votre billet a egalement ete envoye a votre adresse.</span>
     </div>
   </div>
 </div>

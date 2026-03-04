@@ -1,4 +1,16 @@
-﻿from django.urls import reverse_lazy
+﻿from django.http import JsonResponse
+# API pour retourner la durée totale d'un trip (en minutes)
+from trips.models import Trip
+from django.views.decorators.http import require_GET
+
+@require_GET
+def api_trip_duree(request, trip_id):
+    try:
+        trip = Trip.objects.get(pk=trip_id)
+        return JsonResponse({"duree_totale": trip.duree_totale})
+    except Trip.DoesNotExist:
+        return JsonResponse({"duree_totale": 0})
+from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
 from django.shortcuts import redirect, get_object_or_404, render
 from django.utils import timezone
@@ -649,7 +661,7 @@ def recettes(request):
     aujourd_hui = timezone.now().date()
 
     # Récupérer le filtre période depuis GET
-    periode = request.GET.get('periode', 'tout')
+    periode = request.GET.get('periode', 'aujourd_hui')
 
     # Définir la date de début selon la période
     if periode == 'aujourd_hui':
@@ -719,3 +731,5 @@ def recettes(request):
         'aujourd_hui':      aujourd_hui,
         'total_general':    total_general,
     })
+
+

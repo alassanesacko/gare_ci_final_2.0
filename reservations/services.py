@@ -1,3 +1,26 @@
+from django.db import models
+
+class ReservationService:
+    @staticmethod
+    def attribuer_sieges(reservation):
+        """
+        Attribue des numéros de sièges consécutifs pour une réservation,
+        en tenant compte des sièges déjà attribués pour ce départ et cette date.
+        """
+        depart = reservation.depart
+        date_voyage = reservation.date_voyage
+        # Récupérer toutes les réservations confirmées ou en attente pour ce départ et cette date
+        reservations_existantes = Reservation.objects.filter(
+            depart=depart,
+            date_voyage=date_voyage,
+            statut__in=[ReservationStatus.EN_ATTENTE, ReservationStatus.CONFIRMEE]
+        ).exclude(id=reservation.id)
+        # Compter le nombre total de places déjà attribuées
+        places_attribuees = sum(r.nombre_places for r in reservations_existantes)
+        # Les nouveaux sièges commencent après les places déjà attribuées
+        debut = places_attribuees + 1
+        fin = debut + reservation.nombre_places
+        return list(range(debut, fin))
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -41,22 +64,18 @@ class ReservationService:
                 f"Les reservations sont fermees {politique.delai_min_avant_depart}h avant le depart."
             )
 
-        if nombre_places > politique.places_max_par_reservation:
-            raise ValidationError(f"Maximum {politique.places_max_par_reservation} places par reservation.")
+        if nombre_places > 10:
+            raise ValidationError("Maximum 10 places par réservation.")
 
-        active_statuses = [
-            ReservationStatus.EN_ATTENTE,
-            ReservationStatus.CONFIRMEE,
-            ReservationStatus.CONFIRMEE,
-        ]
-        reservations_actives = Reservation.objects.filter(
+        # Limite de 10 places réservées par client et par jour (toutes réservations confondues ce jour-là)
+        active_statuses = [ReservationStatus.EN_ATTENTE, ReservationStatus.CONFIRMEE]
+        total_places_jour = Reservation.objects.filter(
             utilisateur=utilisateur,
+            date_voyage=date_voyage,
             statut__in=[s.value for s in active_statuses],
-        ).count()
-        if reservations_actives >= politique.reservations_max_par_client:
-            raise ValidationError(
-                f"Vous avez deja {politique.reservations_max_par_client} reservations actives."
-            )
+        ).aggregate(total=models.Sum('nombre_places'))['total'] or 0
+        if total_places_jour + nombre_places > 10:
+            raise ValidationError("Vous ne pouvez pas réserver plus de 10 places pour cette date.")
 
         places_dispo = depart.places_disponibles_pour(date_voyage)
         if places_dispo < nombre_places:

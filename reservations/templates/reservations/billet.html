@@ -107,10 +107,12 @@
   }
 </style>
 
-<div class="billet-container">
+{% for billet in billets %}
+<div class="billet-container" style="page-break-after: always;">
   <div class="billet-header">
     <h1>🚌 GareCI - BILLET DE VOYAGE</h1>
-    <p>Réf: <strong>{{ reference }}</strong></p>
+    <p>Réf: <strong>{{ billet.reference }}</strong></p>
+    <p>Billet {{ billet.numero }} / {{ billet.total }}</p>
   </div>
 
   <div class="billet-content">
@@ -130,6 +132,9 @@
         <span class="billet-label">Escales:</span> {{ escales_villes }}
       </div>
       {% endif %}
+      <div class="billet-info">
+        <span class="billet-label">Distance:</span> {{ distance_km|default:"-" }} km
+      </div>
     </div>
 
     <div class="billet-section">
@@ -156,7 +161,7 @@
         <span class="billet-label">Téléphone:</span> {{ utilisateur.phone|default:"Non fourni" }}
       </div>
       <div class="billet-info">
-        <span class="billet-label">Places:</span> {{ reservation.nombre_places }}
+        <span class="billet-label">Numéro de siège:</span> {{ billet.siege }}
       </div>
     </div>
 
@@ -171,25 +176,25 @@
     </div>
   </div>
 
+
   <div class="prix-total">
-    Total: {{ reservation.prix_total }} FCFA
+    Prix unitaire : {{ depart.prix|floatformat:0 }} FCFA
   </div>
 
   <div class="qr-section">
     <h3>Code de Présentation</h3>
-    <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR Code Billet">
-    <p style="margin: 10px 0 0 0; font-size: 12px;">{{ reference }}</p>
+    <img src="data:image/png;base64,{{ billet.qr_b64 }}" alt="QR Code Billet">
+    <p style="margin: 10px 0 0 0; font-size: 12px;">{{ billet.reference }}</p>
   </div>
 
   <div class="billet-footer">
     <p>📋 Veuillez présenter ce billet 15 minutes avant le départ du bus.</p>
-    <p>GareCI • Adjamé • Abidjan • +225 07 00 00</p>
+    <p>GareCI • Adjamé • Abidjan • +225 07 00 00 00</p>
     <p>Merci d'avoir choisi GareCI!</p>
   </div>
 
-  <div class="print-button">
-    <button class="btn-print" onclick="window.print()">� Télécharger en PDF</button>
-  </div>
+  <!-- Bouton de téléchargement supprimé -->
 </div>
+{% endfor %}
 </body>
 </html>

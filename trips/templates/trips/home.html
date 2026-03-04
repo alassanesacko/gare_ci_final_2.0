@@ -26,34 +26,167 @@
             <p>Des trajets fiables, des departs reguliers et une reservation simple en quelques clics.</p>
         </div>
 
-        <form method="get" action="{% url 'trips:search_results' %}" class="client-search-form">
-            <div class="search-field">
-                <label for="ville_depart">Ville depart</label>
-                <input id="ville_depart" type="text" name="ville_depart" list="villes-depart-list" placeholder="Ex: Abidjan">
+        <script>
+            const VILLES_DATA = {{ villes_json|safe }};
+        </script>
+
+        <form method="get"
+              action="{% url 'trips:search_results' %}"
+              class="client-search-form"
+              id="searchForm">
+
+            <div class="search-row-top">
+                <div class="type-voyage-group">
+                    <label class="type-radio">
+                        <input type="radio" name="type_voyage"
+                               value="aller_simple" checked
+                               id="radioAllerSimple">
+                        <span>Aller simple</span>
+                    </label>
+                    <label class="type-radio">
+                        <input type="radio" name="type_voyage"
+                               value="aller_retour"
+                               id="radioAllerRetour">
+                        <span>&#8596; Aller-retour</span>
+                    </label>
+                </div>
             </div>
 
-            <div class="search-field">
-                <label for="ville_arrivee">Ville arrivee</label>
-                <input id="ville_arrivee" type="text" name="ville_arrivee" list="villes-arrivee-list" placeholder="Ex: Bouake">
-            </div>
+            <div class="search-row-main">
+                <div class="search-field autocomplete-field">
+                    <label>Ville depart</label>
+                    <div class="autocomplete-wrap">
+                        <input type="text"
+                               id="inputDepart"
+                               placeholder="Ex: Abidjan"
+                               autocomplete="off"
+                               class="search-input-text">
+                        <input type="hidden"
+                               name="ville_depart"
+                               id="hiddenDepart">
+                        <ul class="ac-liste" id="listeDepart"></ul>
+                    </div>
+                </div>
 
-            <div class="search-actions">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-search"></i> Rechercher
-                </button>
+                <div class="search-field autocomplete-field">
+                    <label>Ville arrivee</label>
+                    <div class="autocomplete-wrap">
+                        <input type="text"
+                               id="inputArrivee"
+                               placeholder="Ex: Bouake"
+                               autocomplete="off"
+                               class="search-input-text">
+                        <input type="hidden"
+                               name="ville_arrivee"
+                               id="hiddenArrivee">
+                        <ul class="ac-liste" id="listeArrivee"></ul>
+                    </div>
+                </div>
+
+                <div class="search-field">
+                    <label>Date aller</label>
+                    <div class="date-display"
+                         id="displayAller"
+                         onclick="ouvrirCalendrier('aller')">
+                        <i class="fas fa-calendar"></i>
+                        <span id="texteAller">Choisir une date</span>
+                    </div>
+                    <input type="hidden" name="date" id="hiddenDateAller">
+                </div>
+
+                <div class="search-field">
+                    <label for="heureDepart">Heure depart</label>
+                    <select name="heure_depart" id="heureDepart">
+                        <option value="">Toutes les heures</option>
+                        <option value="06:30">06h30</option>
+                        <option value="07:30">07h30</option>
+                        <option value="08:30">08h30</option>
+                        <option value="09:30">09h30</option>
+                        <option value="10:30">10h30</option>
+                        <option value="11:30">11h30</option>
+                        <option value="12:30">12h30</option>
+                        <option value="13:30">13h30</option>
+                        <option value="14:30">14h30</option>
+                        <option value="15:30">15h30</option>
+                    </select>
+                </div>
+
+                <div class="search-field"
+                     id="fieldDateRetour"
+                     style="display:none">
+                    <label>Date retour</label>
+                    <div class="date-display"
+                         id="displayRetour"
+                         onclick="ouvrirCalendrier('retour')">
+                        <i class="fas fa-calendar"></i>
+                        <span id="texteRetour">Choisir une date</span>
+                    </div>
+                    <input type="hidden"
+                           name="date_retour"
+                           id="hiddenDateRetour">
+                </div>
+
+                <div class="search-field">
+                    <label>Passagers</label>
+                    <div class="passagers-ctrl">
+                        <button type="button"
+                                class="btn-pass"
+                                id="btnMoins">&#8722;</button>
+                        <span id="nbAffiche">1</span>
+                        <input type="hidden"
+                               name="nb_passagers"
+                               id="hiddenPassagers"
+                               value="1">
+                        <button type="button"
+                                class="btn-pass"
+                                id="btnPlus">+</button>
+                    </div>
+                </div>
+
+                <div class="search-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Rechercher
+                    </button>
+                </div>
             </div>
         </form>
 
-        <datalist id="villes-depart-list">
-            {% for ville in villes %}
-            <option value="{{ ville.nom }}"></option>
-            {% endfor %}
-        </datalist>
-        <datalist id="villes-arrivee-list">
-            {% for ville in villes %}
-            <option value="{{ ville.nom }}"></option>
-            {% endfor %}
-        </datalist>
+        <div id="calOverlay" class="cal-overlay">
+            <div class="cal-panel">
+                <div class="cal-header">
+                    <button type="button"
+                            class="cal-close"
+                            onclick="fermerCalendrier()">&#10005;</button>
+                    <span>Choisir vos dates</span>
+                </div>
+
+                <div class="cal-semaine">
+                    <span>L</span><span>M</span><span>M</span>
+                    <span>J</span><span>V</span>
+                    <span class="we">S</span>
+                    <span class="we">D</span>
+                </div>
+
+                <div class="cal-body" id="calBody"></div>
+
+                <div class="cal-footer">
+                    <div class="cal-resume">
+                        <span class="cal-aller">
+                            &#10145; <span id="resumeAller">-</span>
+                        </span>
+                        <span class="cal-sep">|</span>
+                        <span class="cal-retour">
+                            &#11013; <span id="resumeRetour">-</span>
+                        </span>
+                    </div>
+                    <button type="button"
+                            class="btn-valider-cal"
+                            onclick="validerDates()">
+                        Valider
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -98,4 +231,294 @@
         {% endfor %}
     </div>
 </section>
+
+<script>
+const MAX_MOIS = 5;
+const MOIS_NOMS = [
+    'JANVIER','FEVRIER','MARS','AVRIL','MAI','JUIN',
+    'JUILLET','AOUT','SEPTEMBRE','OCTOBRE','NOVEMBRE','DECEMBRE'
+];
+const MOIS_COURTS = [
+    'janv.','fevr.','mars','avr.','mai','juin',
+    'juil.','aout','sept.','oct.','nov.','dec.'
+];
+const JOURS_COURTS = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
+
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
+let dateAller = null;
+let dateRetour = null;
+let modeCal = 'aller';
+
+function initAC(inputId, hiddenId, listeId) {
+    const inp = document.getElementById(inputId);
+    const hid = document.getElementById(hiddenId);
+    const lst = document.getElementById(listeId);
+
+    inp.addEventListener('input', function() {
+        const val = this.value.toLowerCase().trim();
+        lst.innerHTML = '';
+        hid.value = '';
+        if (!val) {
+            lst.style.display = 'none';
+            return;
+        }
+
+        const res = VILLES_DATA.filter(v => v.nom.toLowerCase().includes(val)).slice(0, 8);
+        if (!res.length) {
+            lst.style.display = 'none';
+            return;
+        }
+
+        res.forEach(v => {
+            const li = document.createElement('li');
+            li.textContent = v.nom;
+            li.addEventListener('click', () => {
+                inp.value = v.nom;
+                hid.value = v.id;
+                lst.style.display = 'none';
+            });
+            lst.appendChild(li);
+        });
+        lst.style.display = 'block';
+    });
+
+    document.addEventListener('click', e => {
+        if (!inp.contains(e.target) && !lst.contains(e.target)) {
+            lst.style.display = 'none';
+        }
+    });
+}
+
+initAC('inputDepart', 'hiddenDepart', 'listeDepart');
+initAC('inputArrivee', 'hiddenArrivee', 'listeArrivee');
+
+document.getElementById('radioAllerSimple').addEventListener('change', function() {
+    document.getElementById('fieldDateRetour').style.display = 'none';
+    dateRetour = null;
+    document.getElementById('hiddenDateRetour').value = '';
+    document.getElementById('texteRetour').textContent = 'Choisir une date';
+    document.getElementById('displayRetour').classList.remove('choisie');
+    mettreAJourResume();
+});
+
+document.getElementById('radioAllerRetour').addEventListener('change', function() {
+    document.getElementById('fieldDateRetour').style.display = '';
+});
+
+const MIN_P = 1;
+const MAX_P = 10;
+document.getElementById('btnMoins').addEventListener('click', function() {
+    let v = parseInt(document.getElementById('hiddenPassagers').value, 10);
+    if (v > MIN_P) {
+        v--;
+        document.getElementById('hiddenPassagers').value = v;
+        document.getElementById('nbAffiche').textContent = v;
+    }
+    this.disabled = v <= MIN_P;
+    document.getElementById('btnPlus').disabled = false;
+});
+
+document.getElementById('btnPlus').addEventListener('click', function() {
+    let v = parseInt(document.getElementById('hiddenPassagers').value, 10);
+    if (v < MAX_P) {
+        v++;
+        document.getElementById('hiddenPassagers').value = v;
+        document.getElementById('nbAffiche').textContent = v;
+    }
+    this.disabled = v >= MAX_P;
+    document.getElementById('btnMoins').disabled = false;
+});
+
+function ouvrirCalendrier(mode) {
+    modeCal = mode;
+    document.getElementById('calOverlay').style.display = 'flex';
+    genererMois();
+    mettreAJourResume();
+}
+
+function fermerCalendrier() {
+    document.getElementById('calOverlay').style.display = 'none';
+}
+
+document.getElementById('calOverlay').addEventListener('click', function(e) {
+    if (e.target === this) {
+        fermerCalendrier();
+    }
+});
+
+function genererMois() {
+    const body = document.getElementById('calBody');
+    body.innerHTML = '';
+    for (let i = 0; i < MAX_MOIS; i++) {
+        const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+        body.appendChild(creerMois(d));
+    }
+}
+
+function creerMois(premier) {
+    const an = premier.getFullYear();
+    const mois = premier.getMonth();
+    const div = document.createElement('div');
+    div.className = 'mois-bloc';
+
+    const titre = document.createElement('div');
+    titre.className = 'mois-titre';
+    titre.textContent = MOIS_NOMS[mois] + ' ' + an;
+    div.appendChild(titre);
+
+    const grille = document.createElement('div');
+    grille.className = 'mois-grille';
+
+    let debut = (premier.getDay() + 6) % 7;
+    for (let i = 0; i < debut; i++) {
+        const v = document.createElement('div');
+        v.className = 'cj';
+        grille.appendChild(v);
+    }
+
+    const nbJ = new Date(an, mois + 1, 0).getDate();
+    const isAR = document.getElementById('radioAllerRetour').checked;
+    for (let j = 1; j <= nbJ; j++) {
+        const date = new Date(an, mois, j);
+        date.setHours(0, 0, 0, 0);
+        const cell = document.createElement('div');
+        cell.className = 'cj';
+        cell.textContent = j;
+
+        const jourSem = date.getDay();
+        if (jourSem === 0 || jourSem === 6) {
+            cell.classList.add('we');
+        }
+
+        const bloqueePourRetour = Boolean(
+            isAR && modeCal === 'retour' && dateAller && date <= dateAller
+        );
+
+        if (date < today || bloqueePourRetour) {
+            cell.classList.add('passe');
+        } else {
+            cell.classList.add('dispo');
+            cell.addEventListener('click', () => selDate(date));
+        }
+
+        appliquerStyle(cell, date);
+        grille.appendChild(cell);
+    }
+
+    div.appendChild(grille);
+    return div;
+}
+
+function appliquerStyle(cell, date) {
+    const d = date.getTime();
+    const a = dateAller ? dateAller.getTime() : null;
+    const r = dateRetour ? dateRetour.getTime() : null;
+    const uneSemaine = 7 * 24 * 60 * 60 * 1000;
+    const isAR = document.getElementById('radioAllerRetour').checked;
+
+    cell.classList.remove('sel-aller', 'sel-retour', 'plage', 'semaine-orange', 'bloque');
+    if (isAR && modeCal === 'retour' && a && d <= a) {
+        cell.classList.add('bloque');
+    }
+    if (isAR && a && d > a && d <= a + uneSemaine) {
+        cell.classList.add('semaine-orange');
+    }
+    if (a && d === a) {
+        cell.classList.add('sel-aller');
+    } else if (r && d === r) {
+        cell.classList.add('sel-retour');
+    } else if (a && r && d > a && d < r) {
+        cell.classList.add('plage');
+    }
+}
+
+function selDate(date) {
+    const isAR = document.getElementById('radioAllerRetour').checked;
+
+    if (!isAR) {
+        dateAller = date;
+        mettreAJourChamps();
+        fermerCalendrier();
+        return;
+    }
+
+    if (modeCal === 'aller') {
+        dateAller = date;
+        dateRetour = null;
+        modeCal = 'retour';
+        genererMois();
+        mettreAJourResume();
+        return;
+    } else {
+        if (date <= dateAller) {
+            dateAller = date;
+            dateRetour = null;
+            modeCal = 'retour';
+        } else {
+            dateRetour = date;
+            mettreAJourChamps();
+        }
+    }
+    genererMois();
+    mettreAJourResume();
+}
+
+function fmtISO(d) {
+    return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+}
+
+function fmtAff(d) {
+    return JOURS_COURTS[d.getDay()] + ' ' +
+        d.getDate() + ' ' +
+        MOIS_COURTS[d.getMonth()];
+}
+
+function mettreAJourChamps() {
+    if (dateAller) {
+        document.getElementById('hiddenDateAller').value = fmtISO(dateAller);
+        document.getElementById('texteAller').textContent = fmtAff(dateAller);
+        document.getElementById('displayAller').classList.add('choisie');
+    }
+    if (dateRetour) {
+        document.getElementById('hiddenDateRetour').value = fmtISO(dateRetour);
+        document.getElementById('texteRetour').textContent = fmtAff(dateRetour);
+        document.getElementById('displayRetour').classList.add('choisie');
+    }
+}
+
+function mettreAJourResume() {
+    document.getElementById('resumeAller').textContent = dateAller ? fmtAff(dateAller) : '-';
+    document.getElementById('resumeRetour').textContent = dateRetour ? fmtAff(dateRetour) : '-';
+}
+
+function validerDates() {
+    mettreAJourChamps();
+    fermerCalendrier();
+}
+
+document.getElementById('searchForm').addEventListener('submit', function(e) {
+    const dep = document.getElementById('hiddenDepart').value;
+    const arr = document.getElementById('hiddenArrivee').value;
+    const dat = document.getElementById('hiddenDateAller').value;
+
+    if (!dep && !arr) {
+        e.preventDefault();
+        alert("Veuillez selectionner au moins une ville de depart ou d'arrivee.");
+        return;
+    }
+    if (dep && arr && dep === arr) {
+        e.preventDefault();
+        alert("Les villes de depart et d'arrivee doivent etre differentes.");
+        return;
+    }
+    if (!dat) {
+        e.preventDefault();
+        alert("Veuillez choisir une date de depart.");
+    }
+});
+</script>
 {% endblock %}

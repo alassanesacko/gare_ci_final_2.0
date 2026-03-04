@@ -37,6 +37,7 @@
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 20px;
+        min-width: 760px;
     }
 
     .trips-table th {
@@ -131,9 +132,21 @@
 
     /* Responsive */
     @media (max-width: 768px) {
+        .trips-container {
+            padding: 14px;
+        }
+
         .trips-table {
             display: block;
             overflow-x: auto;
+        }
+
+        .trips-header {
+            align-items: flex-start;
+        }
+
+        .trips-header h2 {
+            font-size: 1.2rem;
         }
         
         .action-buttons {

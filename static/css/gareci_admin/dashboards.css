@@ -304,6 +304,14 @@ li.active {
     flex: 1;
     padding: 30px;
     background-color: #f9f9f9;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.table-responsive,
+.accordion-body {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Stats Section */
@@ -736,6 +744,7 @@ li.active {
 @media (max-width: 768px) {
     .content-header {
         padding: 0 15px;
+        gap: 8px;
     }
     
     .content-wrapper {
@@ -748,6 +757,16 @@ li.active {
     
     .header-right {
         gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .breadcrumbs {
+        font-size: 0.95rem;
+    }
+
+    .breadcrumbs a {
+        font-size: 1.05rem;
     }
 }
 
@@ -769,6 +788,26 @@ li.active {
     
     .sidebar-toggle {
         margin-right: 10px;
+    }
+
+    .breadcrumbs {
+        font-size: 0.85rem;
+    }
+
+    .breadcrumbs a {
+        font-size: 0.95rem;
+    }
+
+    .trip-card,
+    .stat-card,
+    .table-section {
+        padding: 14px;
+    }
+
+    .trips-table,
+    .departures-table,
+    .table-reservations {
+        min-width: 720px;
     }
 }
 

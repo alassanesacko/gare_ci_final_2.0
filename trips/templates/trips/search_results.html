@@ -19,6 +19,7 @@
     {% if resultats %}
     <div class="departures-cards">
         {% for item in resultats %}
+        {% url 'reservations:reserve' item.depart.id date_str as reserve_url %}
         <article class="departure-card">
             <div class="departure-top">
                 <div class="times">
@@ -35,7 +36,10 @@
                 {% if item.depart.trip.est_direct %}
                 <span class="badge badge-direct">Direct</span>
                 {% else %}
-                <span class="badge badge-escale">{{ item.depart.trip.etapetrajet_set.count|add:"-1" }} escale(s)</span>
+                <span class="badge badge-escale">
+                    {{ item.escales|length }} escale(s)
+                    {% if item.escales_str %}({{ item.escales_str }}){% endif %}
+                </span>
                 {% endif %}
             </div>
 
@@ -58,11 +62,11 @@
             <div class="departure-bottom">
                 <div class="price">{{ item.depart.prix }} FCFA</div>
                 {% if user.is_authenticated %}
-                <a href="{% url 'reservations:reserve' item.depart.id date_str %}" class="btn-reserve">
+                <a href="{{ reserve_url }}?nb_passagers={{ nb_passagers }}" class="btn-reserve">
                     <i class="fas fa-ticket-alt"></i> Reserver
                 </a>
                 {% else %}
-                <a href="{% url 'accounts:login' %}?next={% url 'reservations:reserve' item.depart.id date_str %}" class="btn-reserve">
+                <a href="{% url 'accounts:login' %}?next={{ reserve_url }}%3Fnb_passagers%3D{{ nb_passagers }}" class="btn-reserve">
                     <i class="fas fa-sign-in-alt"></i> Reserver
                 </a>
                 {% endif %}

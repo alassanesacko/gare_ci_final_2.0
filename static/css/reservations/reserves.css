@@ -114,6 +114,18 @@
     font-weight: 700;
     color: #222;
 }
+
+.trajet-main {
+    display: block;
+}
+
+.trajet-escales {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.92rem;
+    color: #ff6b00;
+    font-weight: 600;
+}
 .recap-item.recap-total {
     grid-column: span 2;
     background: linear-gradient(90deg, #fffbe6 0%, #ffe3d1 100%);
@@ -369,6 +381,14 @@
     font-size: 1rem;
     font-weight: 700;
     color: #1a1a1a;
+}
+
+.type-trajet-escales {
+    display: block;
+    margin-top: 4px;
+    color: #ff6b00;
+    font-size: 0.9rem;
+    font-weight: 600;
 }
 
 .equipements-section {

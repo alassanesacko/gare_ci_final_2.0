@@ -172,3 +172,44 @@
     background: #6c757d;
     color: white;
 }
+
+@media (max-width: 900px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .accordion-header {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .accordion-left {
+        width: 100%;
+    }
+
+    .accordion-badges {
+        width: 100%;
+        order: 3;
+    }
+
+    .accordion-arrow {
+        margin-left: auto;
+    }
+}
+
+@media (max-width: 576px) {
+    .table-reservations {
+        min-width: 760px;
+    }
+
+    .accordion-header {
+        padding: 12px 14px;
+    }
+
+    .table-reservations thead th,
+    .table-reservations tbody td {
+        padding: 10px 12px;
+    }
+}

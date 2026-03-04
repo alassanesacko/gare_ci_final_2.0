@@ -1,3 +1,42 @@
+def get_tickets_context(reservation):
+    """
+    Étend get_ticket_context() existant pour les billets multiples.
+    Retourne le même contexte + la liste 'billets'
+    avec 1 entrée par place réservée.
+
+    Chaque billet a :
+    - numero    : position dans la liste (1, 2, 3...)
+    - total     : nombre total de billets (= nombre_places)
+    - siege     : numéro de siège individuel
+    - reference : REF_RESERVATION-N (ex: KX9A2B7C1D3F-1)
+    - qr_b64    : QR code propre à ce billet
+    """
+    contexte = get_ticket_context(reservation)
+    billets = []
+    # Assign seats using ReservationService.attribuer_sieges if available
+    try:
+        from .services import ReservationService
+        sieges = ReservationService.attribuer_sieges(reservation)
+    except Exception:
+        sieges = list(range(1, reservation.nombre_places + 1))
+    for idx, siege in enumerate(sieges, start=1):
+        ref_billet = f"{reservation.reference}-{siege}"
+        billets.append({
+            'numero':    idx,
+            'total':     reservation.nombre_places,
+            'siege':     siege,
+            'reference': ref_billet,
+            'qr_b64':    _build_qr_base64(ref_billet),
+        })
+    contexte['billets'] = billets
+    # Ajoute la distance totale du trajet (en km)
+    try:
+        etapes = list(reservation.depart.trip.etapetrajet_set.all())
+        distance = sum(etape.segment.distance_km for etape in etapes)
+    except Exception:
+        distance = None
+    contexte['distance_km'] = distance
+    return contexte
 from io import BytesIO
 import base64
 

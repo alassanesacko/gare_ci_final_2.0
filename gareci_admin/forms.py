@@ -177,6 +177,17 @@ class DepartForm(forms.ModelForm):
 
     def save(self, commit=True):
         depart = super().save(commit=False)
+        # Calcul automatique de l'heure d'arrivée si possible
+        if depart.trip_id and depart.heure_depart:
+            try:
+                duree = depart.trip.duree_totale  # en minutes
+                from datetime import datetime, timedelta
+                # heure_depart est un time, on doit le convertir en datetime
+                dt_depart = datetime.combine(datetime.today(), depart.heure_depart)
+                dt_arrivee = dt_depart + timedelta(minutes=duree)
+                depart.heure_arrivee = dt_arrivee.time()
+            except Exception:
+                pass
         if depart.trip_id:
             depart.prix = depart.trip.price
         if commit:

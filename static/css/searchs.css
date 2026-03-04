@@ -221,6 +221,7 @@
 /* ===== CARD LAYOUT (NEW SEARCH RESULTS) ===== */
 .departures-cards {
     display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 14px;
     margin-bottom: 26px;
 }
@@ -353,6 +354,10 @@
 }
 
 @media (max-width: 900px) {
+    .departures-cards {
+        grid-template-columns: 1fr;
+    }
+
     .search-edit-form {
         grid-template-columns: 1fr;
     }

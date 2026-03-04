@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -58,7 +58,7 @@
                         </ul>
                     </li>
                         <li class="{% if request.resolver_match.url_name == 'recettes' %}active{% endif %}">
-                            <a href="{% url 'dashboard:recettes' %}">
+                            <a href="{% url 'dashboard:recettes' %}?periode=aujourd_hui">
                                 <i class="fas fa-coins"></i> Recettes
                             </a>
                         </li>
@@ -431,4 +431,6 @@
     {% block extra_js %}{% endblock %}
 </body>
 </html>
+
+
 

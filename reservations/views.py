@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from django.utils import timezone
 
 from django.conf import settings
@@ -12,7 +13,6 @@ from django.views.decorators.http import require_POST
 
 from trips.models import Depart
 
-from .forms import ReservationForm
 from .models import ContactMessage, Paiement, Reservation, ReservationStatus
 from .services import ReservationService
 
@@ -58,54 +58,49 @@ def reserve(request, depart_id, date_str):
         actif=True,
     )
 
-
-    # Par défaut, on prend la date de l'URL
-    date_voyage = None
-    if request.method == "POST":
-        # Si le formulaire contient une date, on la prend
-        date_input = request.POST.get("reservation_date")
-        if date_input:
-            try:
-                date_voyage = datetime.strptime(date_input, "%Y-%m-%d").date()
-            except ValueError:
-                date_voyage = None
-        else:
-            try:
-                date_voyage = datetime.strptime(date_str, "%Y-%m-%d").date()
-            except ValueError:
-                date_voyage = None
-    else:
-        try:
-            date_voyage = datetime.strptime(date_str, "%Y-%m-%d").date()
-        except ValueError:
-            date_voyage = None
+    try:
+        date_voyage = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        date_voyage = None
 
     if not date_voyage:
         messages.error(request, "Date de voyage invalide.")
         return redirect("search_results")
 
     if date_voyage < timezone.now().date():
-        messages.error(request, "Cette date est déjà passée.")
+        messages.error(request, "Cette date est deja passee.")
         return redirect("search_results")
 
     places_dispo = depart.places_disponibles_pour(date_voyage)
+    nb_passagers_raw = (
+        request.POST.get("nb_passagers", "").strip()
+        if request.method == "POST"
+        else request.GET.get("nb_passagers", "").strip()
+    )
+    try:
+        nb_passagers = max(1, int(nb_passagers_raw or "1"))
+    except ValueError:
+        nb_passagers = 1
+
+    prix_total = (Decimal(depart.prix) * Decimal(nb_passagers)).quantize(Decimal("0.01"))
+    reservation_error = None
 
     if request.method == "POST":
-        form = ReservationForm(request.POST, places_disponibles=places_dispo)
-        if form.is_valid():
+        if nb_passagers > places_dispo:
+            reservation_error = f"Seulement {places_dispo} place(s) disponible(s) pour cette date."
+            messages.error(request, reservation_error)
+        else:
             try:
                 reservation = ReservationService.creer(
                     depart_id=depart.id,
                     date_voyage=date_voyage,
                     utilisateur=request.user,
-                    nombre_places=form.cleaned_data["nombre_places"],
+                    nombre_places=nb_passagers,
                 )
                 return redirect("reservations:paiement", reservation_id=reservation.id)
             except ValidationError as e:
-                messages.error(request, str(e))
-                form.add_error(None, str(e))
-    else:
-        form = ReservationForm(places_disponibles=places_dispo)
+                reservation_error = str(e)
+                messages.error(request, reservation_error)
 
     etapes = list(depart.trip.etapetrajet_set.all())
     if len(etapes) <= 1:
@@ -126,12 +121,13 @@ def reserve(request, depart_id, date_str):
             "depart": depart,
             "date_voyage": date_voyage,
             "places_dispo": places_dispo,
-            "form": form,
+            "nb_passagers": nb_passagers,
+            "prix_total": prix_total,
+            "reservation_error": reservation_error,
             "type_trajet": type_trajet,
             "escales": escales,
         },
     )
-
 
 @login_required
 def attente_validation(request, reservation_id):
@@ -177,10 +173,11 @@ def telecharger_billet(request, reservation_id):
         utilisateur=request.user,
         statut=ReservationStatus.CONFIRMEE,
     )
-    from .ticket import get_ticket_context
-    
-    context = get_ticket_context(reservation)
-    return render(request, "reservations/billet.html", context)
+    from .pdf_utils import generer_billet_pdf
+    pdf_bytes = generer_billet_pdf(reservation)
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="billet_{reservation.reference}.pdf"'
+    return response
 
 
 @login_required
@@ -317,3 +314,4 @@ def contact(request):
             "active_tab": "contact",
         },
     )
+

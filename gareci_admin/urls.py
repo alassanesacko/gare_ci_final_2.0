@@ -44,6 +44,7 @@ from .views import (
     reservation_list,
     admin_voir_billet,
     recettes,
+    api_trip_duree,
 )
 
 app_name = "dashboard"
@@ -91,4 +92,5 @@ urlpatterns = [
     path('reservations/', reservation_list, name='reservation_list'),
     path('recettes/', recettes, name='recettes'),
     path('reservations/<int:reservation_id>/billet/', admin_voir_billet, name='admin_voir_billet'),
+    path('api/trip/<int:trip_id>/duree/', api_trip_duree, name='api_trip_duree'),
 ]

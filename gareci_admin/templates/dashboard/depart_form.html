@@ -36,3 +36,51 @@
     </form>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+function getSelectedTripId() {
+    const tripSelect = document.getElementById('id_trip');
+    return tripSelect ? tripSelect.value : null;
+}
+async function fetchTripDuration(tripId) {
+    if (!tripId) return 0;
+    try {
+        const response = await fetch(`/api/trip/${tripId}/duree/`);
+        if (!response.ok) return 0;
+        const data = await response.json();
+        return data.duree_totale || 0;
+    } catch (e) { return 0; }
+}
+function parseTime(str) {
+    if (!str) return null;
+    const [h, m] = str.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return null;
+    return {h, m};
+}
+function formatTime(h, m) {
+    h = ((h % 24) + 24) % 24;
+    m = ((m % 60) + 60) % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+}
+async function updateHeureArrivee() {
+    const heureDepartInput = document.getElementById('id_heure_depart');
+    const heureArriveeInput = document.getElementById('id_heure_arrivee');
+    const tripId = getSelectedTripId();
+    const duree = await fetchTripDuration(tripId);
+    const t = parseTime(heureDepartInput.value);
+    if (t && duree) {
+        const totalMinutes = t.h * 60 + t.m + duree;
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        heureArriveeInput.value = formatTime(h, m);
+    }
+}
+document.addEventListener('DOMContentLoaded', function() {
+    const tripSelect = document.getElementById('id_trip');
+    const heureDepartInput = document.getElementById('id_heure_depart');
+    if (tripSelect) tripSelect.addEventListener('change', updateHeureArrivee);
+    if (heureDepartInput) heureDepartInput.addEventListener('change', updateHeureArrivee);
+});
+</script>
+{% endblock %}

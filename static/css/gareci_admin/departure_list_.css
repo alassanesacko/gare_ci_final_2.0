@@ -37,6 +37,7 @@
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 20px;
+        min-width: 760px;
     }
 
     .departures-table th {
@@ -148,9 +149,21 @@
 
     /* Responsive */
     @media (max-width: 768px) {
+        .departures-container {
+            padding: 14px;
+        }
+
         .departures-table {
             display: block;
             overflow-x: auto;
+        }
+
+        .departures-header {
+            align-items: flex-start;
+        }
+
+        .departures-header h2 {
+            font-size: 1.2rem;
         }
         
         .action-buttons {
